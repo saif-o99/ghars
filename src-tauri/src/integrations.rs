@@ -22,6 +22,8 @@ pub struct IntegrationStatus {
     pub installed: bool,
     pub config_path: String,
     pub note: String,
+    /// Codex only: connected, but Codex hasn't approved the current Ghars hooks yet.
+    pub needs_approval: bool,
 }
 
 struct Tool {
@@ -191,6 +193,7 @@ fn status_of(tool: &Tool) -> IntegrationStatus {
             Ok(_) => tool.note.into(),
             Err(e) => e.clone(),
         },
+        needs_approval: tool.id == "codex" && file.as_ref().is_ok_and(|f| codex_trust::needs_approval(f)),
     }
 }
 
@@ -200,7 +203,11 @@ pub fn install(id: &str) -> Result<IntegrationStatus, String> {
     {
         let _guard = lock();
         let mut root = read_json(&file)?;
+        let before = root.clone();
         add_ours(id, &mut root)?;
+        if id == "codex" {
+            codex_trust::forget_old_approvals(&file, &before, &root);
+        }
         write_json(&file, &root, !own_file(id))?;
     }
     status(id)
@@ -227,6 +234,9 @@ fn migrate_one(id: &str) -> Result<(), String> {
     let mut updated = root.clone();
     add_ours(id, &mut updated)?;
     if updated != root {
+        if id == "codex" {
+            codex_trust::forget_old_approvals(&file, &root, &updated);
+        }
         write_json(&file, &updated, !own_file(id))?;
         log::info!("updated the Ghars hooks in {}", file.display());
     }
@@ -537,6 +547,238 @@ fn parse_shell_vars(out: &str, mark: &str) -> std::collections::HashMap<String, 
         .filter(|(_, value)| !value.is_empty())
         .map(|(name, value)| (name.to_string(), value.to_string()))
         .collect()
+}
+
+/// Codex runs a user hook only once it is approved with `/hooks`. It stores each approval in
+/// its config.toml as `[hooks.state."<hooks.json path>:<event>:<group>:<handler>"]` with a
+/// `trusted_hash` of that hook's definition. Ghars can't recompute Codex's hash, so when it
+/// changes its own hooks it remembers the hashes approved for the old ones and counts only
+/// approvals made after that.
+mod codex_trust {
+    use super::{marker, read_json};
+    use serde_json::Value;
+    use std::collections::{BTreeSet, HashMap};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    type Position = (String, usize, usize);
+
+    /// Whether Codex still has to approve any of the Ghars hooks in `hooks_file`.
+    pub fn needs_approval(hooks_file: &Path) -> bool {
+        let Ok(root) = read_json(hooks_file) else { return false };
+        let ours = positions(&root);
+        if ours.is_empty() {
+            return false;
+        }
+        let approved = approvals(hooks_file);
+        let stale = stale_hashes();
+        ours.iter()
+            .any(|p| approved.get(p).is_none_or(|hash| stale.contains(hash)))
+    }
+
+    /// Called before Ghars rewrites the Codex hooks: if its hooks change, the approvals Codex
+    /// recorded for the old ones no longer apply (Codex asks again), so remember them as stale.
+    pub fn forget_old_approvals(hooks_file: &Path, before: &Value, after: &Value) {
+        if definitions(before) == definitions(after) {
+            return;
+        }
+        let approved = approvals(hooks_file);
+        let old: Vec<String> = positions(before)
+            .iter()
+            .filter_map(|p| approved.get(p).cloned())
+            .collect();
+        if old.is_empty() {
+            return;
+        }
+        let mut stale = stale_hashes();
+        stale.extend(old);
+        let Some(file) = stale_file() else { return };
+        if let Some(dir) = file.parent() {
+            let _ = fs::create_dir_all(dir);
+        }
+        if let Err(e) = fs::write(&file, serde_json::to_string(&stale).unwrap_or_default()) {
+            log::warn!("could not record the old Codex hook approvals: {e}");
+        }
+    }
+
+    /// Where each Ghars hook sits in a hooks.json: Codex's event label, group and handler index.
+    fn positions(root: &Value) -> Vec<Position> {
+        let mark = marker();
+        let mut out = vec![];
+        let Some(hooks) = root.get("hooks").and_then(Value::as_object) else {
+            return out;
+        };
+        for (event, groups) in hooks {
+            for (g, group) in groups.as_array().into_iter().flatten().enumerate() {
+                for (h, handler) in group
+                    .get("hooks")
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                    .enumerate()
+                {
+                    if handler.to_string().contains(&mark) {
+                        out.push((snake_case(event), g, h));
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// The Ghars hook definitions, ignoring where they sit, to tell whether they changed.
+    fn definitions(root: &Value) -> BTreeSet<String> {
+        let mark = marker();
+        let mut out = BTreeSet::new();
+        let Some(hooks) = root.get("hooks").and_then(Value::as_object) else {
+            return out;
+        };
+        for (event, groups) in hooks {
+            for group in groups.as_array().into_iter().flatten() {
+                for handler in group.get("hooks").and_then(Value::as_array).into_iter().flatten() {
+                    if handler.to_string().contains(&mark) {
+                        let matcher = group.get("matcher").unwrap_or(&Value::Null);
+                        out.insert(format!("{event}|{matcher}|{handler}"));
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// The approvals Codex recorded for hooks in `hooks_file`, by position.
+    fn approvals(hooks_file: &Path) -> HashMap<Position, String> {
+        let mut out = HashMap::new();
+        let Some(config) = hooks_file.parent().map(|d| d.join("config.toml")) else {
+            return out;
+        };
+        let Ok(text) = fs::read_to_string(config) else {
+            return out;
+        };
+        let Ok(table) = text.parse::<toml::Table>() else {
+            return out;
+        };
+        let Some(state) = table
+            .get("hooks")
+            .and_then(|h| h.get("state"))
+            .and_then(toml::Value::as_table)
+        else {
+            return out;
+        };
+        for (key, entry) in state {
+            let Some(hash) = entry.get("trusted_hash").and_then(toml::Value::as_str) else {
+                continue;
+            };
+            // "<path>:<event>:<group>:<handler>"; the path itself may contain ':' (C:\...).
+            let mut parts = key.rsplitn(4, ':');
+            let (Some(h), Some(g), Some(event), Some(path)) = (parts.next(), parts.next(), parts.next(), parts.next())
+            else {
+                continue;
+            };
+            let (Ok(g), Ok(h)) = (g.parse(), h.parse()) else {
+                continue;
+            };
+            if same_file(Path::new(path), hooks_file) {
+                out.insert((event.to_string(), g, h), hash.to_string());
+            }
+        }
+        out
+    }
+
+    fn same_file(a: &Path, b: &Path) -> bool {
+        match (a.canonicalize(), b.canonicalize()) {
+            (Ok(a), Ok(b)) => a == b,
+            _ => a.to_string_lossy().eq_ignore_ascii_case(&b.to_string_lossy()),
+        }
+    }
+
+    /// "UserPromptSubmit" -> "user_prompt_submit", as Codex labels events in its keys.
+    fn snake_case(event: &str) -> String {
+        let mut out = String::new();
+        for (i, c) in event.chars().enumerate() {
+            if c.is_ascii_uppercase() {
+                if i > 0 {
+                    out.push('_');
+                }
+                out.push(c.to_ascii_lowercase());
+            } else {
+                out.push(c);
+            }
+        }
+        out
+    }
+
+    /// Kept with Ghars's own data (the app's data folder), never in Codex's.
+    fn stale_file() -> Option<PathBuf> {
+        Some(
+            dirs::data_dir()?
+                .join("com.ghars.desktop")
+                .join("codex-stale-approvals.json"),
+        )
+    }
+
+    fn stale_hashes() -> BTreeSet<String> {
+        stale_file()
+            .and_then(|f| fs::read_to_string(f).ok())
+            .and_then(|t| serde_json::from_str(&t).ok())
+            .unwrap_or_default()
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn event_labels_match_codex() {
+            assert_eq!(snake_case("UserPromptSubmit"), "user_prompt_submit");
+            assert_eq!(snake_case("PermissionRequest"), "permission_request");
+            assert_eq!(snake_case("Stop"), "stop");
+            assert_eq!(snake_case("SessionEnd"), "session_end");
+        }
+
+        #[test]
+        fn approvals_are_read_by_position_for_this_file() {
+            let dir = std::env::temp_dir().join(format!("ghars-codex-trust-{}", std::process::id()));
+            fs::create_dir_all(&dir).unwrap();
+            let hooks = dir.join("hooks.json");
+            fs::write(&hooks, "{}").unwrap();
+            // TOML basic strings need backslashes (Windows paths) escaped.
+            let key = |rest: &str| format!("{}:{rest}", hooks.display()).replace('\\', "\\\\");
+            let config = format!(
+                "[hooks.state.\"{}\"]\ntrusted_hash = \"sha256:a\"\n\
+                 [hooks.state.\"{}\"]\nenabled = false\n\
+                 [hooks.state.\"/other/hooks.json:stop:0:0\"]\ntrusted_hash = \"sha256:x\"\n",
+                key("user_prompt_submit:1:0"),
+                key("stop:0:0"),
+            );
+            fs::write(dir.join("config.toml"), config).unwrap();
+            let got = approvals(&hooks);
+            assert_eq!(
+                got.get(&("user_prompt_submit".into(), 1, 0)).map(String::as_str),
+                Some("sha256:a")
+            );
+            assert_eq!(got.len(), 1, "entries without a hash or for other files are ignored");
+            let _ = fs::remove_dir_all(dir);
+        }
+
+        #[test]
+        fn positions_find_only_ghars_handlers() {
+            let mark = marker();
+            let root = serde_json::json!({ "hooks": {
+                "UserPromptSubmit": [
+                    { "hooks": [{ "type": "command", "command": "lint.sh" }] },
+                    { "hooks": [{ "type": "command", "command": format!("curl http://{mark}codex/busy") }] }
+                ],
+                "Stop": [{ "hooks": [
+                    { "type": "command", "command": "say done" },
+                    { "type": "command", "command": format!("curl http://{mark}codex/idle") }
+                ] }]
+            }});
+            let mut got = positions(&root);
+            got.sort();
+            assert_eq!(got, vec![("stop".into(), 0, 1), ("user_prompt_submit".into(), 1, 0)]);
+        }
+    }
 }
 
 #[cfg(test)]

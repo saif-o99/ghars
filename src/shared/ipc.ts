@@ -19,6 +19,8 @@ export interface IntegrationStatus {
   installed: boolean;
   configPath: string;
   note: string;
+  /** Codex only: connected, but Codex has not approved the Ghars hooks yet. */
+  needsApproval: boolean;
 }
 
 export interface HitRect {

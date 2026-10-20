@@ -33,7 +33,12 @@ export function AiToolsSection({ s, l, update }: SectionProps) {
     serverPort().then(setPort).catch(() => {});
     serverError().then(setServerErr).catch(() => {});
     const un = listen("integrations-changed", refresh);
-    return () => void un.then((u) => u());
+    // Coming back from Codex after approving its hooks with /hooks clears the reminder.
+    window.addEventListener("focus", refresh);
+    return () => {
+      void un.then((u) => u());
+      window.removeEventListener("focus", refresh);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load and subscribe once on mount
   }, []);
 
@@ -64,7 +69,7 @@ export function AiToolsSection({ s, l, update }: SectionProps) {
               <b>{t.name}</b>
               <small>{t.installed ? l.connected : t.detected ? l.detected : l.notDetected}</small>
               <code>{t.configPath}</code>
-              {t.installed && t.note && <small className="note">{notes[t.id] ?? t.note}</small>}
+              {t.installed && t.note && (t.id !== "codex" || t.needsApproval) && <small className="note">{notes[t.id] ?? t.note}</small>}
             </div>
             {t.installed ? (
               <button disabled={busyId === t.id} onClick={() => run(t.id, uninstallIntegration)}>{l.disconnect}</button>
