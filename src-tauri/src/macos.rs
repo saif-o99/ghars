@@ -2,7 +2,7 @@
 //! app menu.
 
 use crate::macos_geometry::{self, Bounds, WindowInfo};
-use crate::{AppState, CONFIG, WIN_H, WIN_W, island};
+use crate::{AppState, WIN_H, WIN_W, island};
 use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2_app_kit::{NSEvent, NSResponder, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask};
@@ -34,19 +34,10 @@ mod panel {
 /// focused by the hotkey or a click on the open island, as on the other platforms.
 static KEYABLE: AtomicBool = AtomicBool::new(false);
 
-/// NSMainMenuWindowLevel + 1: the notch style covers the menu bar.
-const NOTCH_LEVEL: i64 = 25;
-/// The level tao gives always-on-top windows: above other apps' windows (full-screen ones
-/// included), below the menu bar and the Dock.
-const FLOATING_LEVEL: i64 = 5;
-
-fn island_level() -> i64 {
-    if CONFIG.read().unwrap().island_style == "notch" {
-        NOTCH_LEVEL
-    } else {
-        FLOATING_LEVEL
-    }
-}
+/// NSMainMenuWindowLevel + 1, for both styles: the notch style covers the menu bar, and the
+/// floating level always-on-top windows get can end up below other apps' full-screen content.
+/// (The floating style is still placed below the menu bar.)
+const ISLAND_LEVEL: i64 = 25;
 
 /// Turns the island window into a non-activating panel. A background app's ordinary window
 /// isn't reliably shown over another app's full-screen Space, a panel is; and a
@@ -72,18 +63,8 @@ pub fn make_island_panel(app: &AppHandle) {
             | NSWindowCollectionBehavior::IgnoresCycle
             | NSWindowCollectionBehavior::FullScreenAuxiliary,
     );
-    let level = island_level();
-    panel.set_level(level);
-    log::info!("The island is a non-activating panel, at window level {level}");
-}
-
-/// The notch style hugs the top of the screen, so it sits above the menu bar.
-pub fn set_island_level(app: &AppHandle) {
-    let Ok(panel) = app.get_webview_panel("island") else {
-        return;
-    };
-    let level = island_level();
-    let _ = app.run_on_main_thread(move || panel.set_level(level));
+    panel.set_level(ISLAND_LEVEL);
+    log::info!("The island is a non-activating panel, at window level {ISLAND_LEVEL}");
 }
 
 /// Shows the island in front without making it key or activating Ghars (a plain `show`

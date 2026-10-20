@@ -457,8 +457,6 @@ fn apply_config(app: AppHandle, state: tauri::State<AppState>, config: Config) -
         macos::rebuild_app_menu(&app);
     }
     position_island(&app);
-    #[cfg(target_os = "macos")]
-    macos::set_island_level(&app);
     // Compared with the shortcut that actually registered rather than the previous
     // config, so one that failed (another app held it) is tried again next time.
     let mut registered = state.hotkey.lock().unwrap();
