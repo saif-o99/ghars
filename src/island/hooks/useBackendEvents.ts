@@ -64,16 +64,18 @@ export function useBackendEvents({ settingsRef, viewRef, setSettings, setRev, se
         if (e.payload.kind === "busy") autoOpen();
       }),
     );
-    // TEMPORARY: "Test" buttons in the prayer settings (remove before release).
-    keep(
-      listen<"now" | "soon">("test-prayer", (e) => {
-        const s = settingsRef.current;
-        const name = (s && nextPrayer(s.prayer, new Date())?.name) || "maghrib";
-        setNow(new Date());
-        setNotice({ name, time: new Date(Date.now() + (e.payload === "soon" ? 5 * 60_000 : -1000)) });
-        if (viewRef.current === "collapsed") setView("compact");
-      }),
-    );
+    // Development only: the browser mock's ?notice= option shows a prayer note on demand.
+    if (import.meta.env.DEV) {
+      keep(
+        listen<"now" | "soon">("test-prayer", (e) => {
+          const s = settingsRef.current;
+          const name = (s && nextPrayer(s.prayer, new Date())?.name) || "maghrib";
+          setNow(new Date());
+          setNotice({ name, time: new Date(Date.now() + (e.payload === "soon" ? 5 * 60_000 : -1000)) });
+          if (viewRef.current === "collapsed") setView("compact");
+        }),
+      );
+    }
     keep(
       listen<string>("hotkey", (e) => {
         if (e.payload === "toggle" && viewRef.current === "expanded") {

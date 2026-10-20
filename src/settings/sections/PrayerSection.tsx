@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { emit } from "@tauri-apps/api/event";
 import { fmt } from "../../i18n";
 import { METHODS, PRAYERS, formatTime, hijriDate, prayerTimes } from "../../shared/prayer";
 import { CITIES, allTimezones, guessCity, systemTimezone, type City } from "../../shared/cities";
@@ -166,11 +165,6 @@ export function PrayerSection({ s, L, l, update }: SectionProps) {
               </Row>
             )}
           </Group>
-          {/* TEMPORARY test buttons, English only — remove before release. */}
-          <div className="actions test-actions">
-            <button onClick={() => emit("test-prayer", "now")}>Test: prayer time now</button>
-            <button onClick={() => emit("test-prayer", "soon")}>Test: prayer in 5 min</button>
-          </div>
         </>
       )}
       <Group>

@@ -54,8 +54,31 @@ jobs:
             exit 1
           fi
 
-  build:
+  # Creates the draft release once. When every build job created it itself, jobs that
+  # started in the same second could each make their own draft and split the installers
+  # (and the updater's latest.json) between them.
+  release:
+    name: Create the draft release
     needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      id: ${{ steps.create.outputs.id }}
+    steps:
+      - id: create
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG" -f name="Ghars $TAG" \
+            -f body="Download the installer for your system below." \
+            -F draft=true -F prerelease=false --jq .id)
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: release
     permissions:
       contents: write
     strategy:
@@ -124,11 +147,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Ghars ${{ github.ref_name }}"
-          releaseBody: "Download the installer for your system below."
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.release.outputs.id }}
           includeUpdaterJson: true
           args: ${{ matrix.args }}
 
@@ -142,11 +161,28 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Ghars ${{ github.ref_name }}"
-          releaseBody: "Download the installer for your system below."
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.release.outputs.id }}
           # latest.json for the updater; each build adds its platforms to it.
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+  # Each build adds its platforms to the release's latest.json. Fail loudly if one is
+  # missing, so a release whose updater manifest is incomplete is never published by mistake.
+  manifest:
+    name: Check the updater manifest
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.release.outputs.id }}
+        run: |
+          asset=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.assets[] | select(.name == "latest.json") | .id')
+          if [ -z "$asset" ]; then echo "::error::The release has no latest.json."; exit 1; fi
+          gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$asset" > latest.json
+          missing=""
+          for p in windows-x86_64 linux-x86_64 darwin-x86_64 darwin-aarch64; do
+            jq -e --arg p "$p" '.platforms[$p].url and .platforms[$p].signature' latest.json > /dev/null || missing="$missing $p"
+          done
+          if [ -n "$missing" ]; then echo "::error::latest.json is missing:$missing"; exit 1; fi
+          echo "latest.json lists every platform."
