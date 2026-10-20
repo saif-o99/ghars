@@ -1,4 +1,8 @@
 mod integrations;
+#[cfg(target_os = "macos")]
+mod macos;
+#[cfg(any(target_os = "macos", test))]
+mod macos_geometry;
 mod server;
 mod tracker;
 mod updates;
@@ -11,7 +15,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{LazyLock, Mutex, RwLock};
 use std::time::{Duration, Instant};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
+#[cfg(not(target_os = "macos"))]
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
+use tauri::tray::{TrayIcon, TrayIconBuilder};
 use tauri::{AppHandle, Emitter, Manager, Monitor, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
@@ -131,19 +137,20 @@ fn island(app: &AppHandle) -> Option<WebviewWindow> {
 
 /// The cursor and the display under it, with the cursor in the same physical pixels as
 /// that display's position and size.
+#[cfg(not(target_os = "macos"))]
 fn cursor_and_monitor(app: &AppHandle) -> Option<(PhysicalPosition<f64>, Monitor)> {
     let c = app.cursor_position().ok()?;
-    // macOS reports the cursor in points times the primary display's scale, but finds
-    // displays by points and gives each display's bounds in its own scale.
-    #[cfg(target_os = "macos")]
-    let c = {
-        let primary = app.primary_monitor().ok().flatten().map_or(1.0, |m| m.scale_factor());
-        PhysicalPosition::new(c.x / primary, c.y / primary)
-    };
     let monitor = app.monitor_from_point(c.x, c.y).ok().flatten()?;
-    #[cfg(target_os = "macos")]
-    let c = PhysicalPosition::new(c.x * monitor.scale_factor(), c.y * monitor.scale_factor());
     Some((c, monitor))
+}
+
+/// macOS finds displays by points but gives each display's bounds in its own scale.
+#[cfg(target_os = "macos")]
+fn cursor_and_monitor(app: &AppHandle) -> Option<(PhysicalPosition<f64>, Monitor)> {
+    let (x, y) = macos::cursor_position();
+    let monitor = app.monitor_from_point(x, y).ok().flatten()?;
+    let scale = monitor.scale_factor();
+    Some((PhysicalPosition::new(x * scale, y * scale), monitor))
 }
 
 fn target_monitor(app: &AppHandle, win: &WebviewWindow) -> Option<Monitor> {
@@ -239,27 +246,6 @@ pub fn position_island(app: &AppHandle) {
     }
 }
 
-/// The macOS menu bar sits above always-on-top windows, so the notch style (which hugs
-/// the top of the screen) raises the island above it.
-#[cfg(target_os = "macos")]
-fn set_island_level(app: &AppHandle) {
-    let Some(win) = island(app) else { return };
-    let notch = CONFIG.read().unwrap().island_style == "notch";
-    // NSMainMenuWindowLevel + 1, or the level tao uses for always-on-top.
-    let level: isize = if notch { 25 } else { 5 };
-    // On every Space, including full-screen apps' own Spaces (FullScreenAuxiliary); it stays
-    // put when Spaces switch and stays out of the window cycle:
-    // CanJoinAllSpaces | Stationary | IgnoresCycle | FullScreenAuxiliary.
-    let behavior: usize = (1 << 0) | (1 << 4) | (1 << 6) | (1 << 8);
-    let Ok(ns_window) = win.ns_window() else { return };
-    let ns_window = ns_window as usize;
-    let _ = win.run_on_main_thread(move || unsafe {
-        let ns_window = ns_window as *mut objc2::runtime::AnyObject;
-        let _: () = objc2::msg_send![ns_window, setLevel: level];
-        let _: () = objc2::msg_send![ns_window, setCollectionBehavior: behavior];
-    });
-}
-
 /// Read-only: the watcher ends an expired timed pause (`end_expired_pause`).
 pub fn is_paused(app: &AppHandle) -> bool {
     match *app.state::<AppState>().pause.lock().unwrap() {
@@ -274,6 +260,9 @@ pub fn sync_island_visibility(app: &AppHandle) {
     let state = app.state::<AppState>();
     let hide = is_paused(app) || state.quiet.load(Ordering::Relaxed) || state.fullscreen.load(Ordering::Relaxed);
     if hide == win.is_visible().unwrap_or(true) {
+        #[cfg(target_os = "macos")]
+        macos::set_island_visible(app, !hide);
+        #[cfg(not(target_os = "macos"))]
         let _ = if hide { win.hide() } else { win.show() };
     }
     state.island_shown.store(!hide, Ordering::Relaxed);
@@ -358,7 +347,9 @@ fn start_hit_testing(app: AppHandle) {
 /// doesn't wake the event loop unless click-through actually has to change.
 #[cfg(not(target_os = "linux"))]
 fn hit_test(app: &AppHandle, ignoring: &mut Option<bool>) -> Duration {
-    const NEAR: Duration = Duration::from_millis(30);
+    // macOS reports hover to the island from here (see below), so it is polled at about the
+    // display's rate there; a pass costs next to nothing.
+    const NEAR: Duration = Duration::from_millis(if cfg!(target_os = "macos") { 16 } else { 30 });
     const FAR: Duration = Duration::from_millis(100);
     const HIDDEN: Duration = Duration::from_millis(250);
     /// Logical pixels around the island within which the cursor counts as near.
@@ -405,13 +396,10 @@ fn cursor_position(_app: &AppHandle) -> Option<(f64, f64)> {
     Some((p.x as f64, p.y as f64))
 }
 
-/// The cursor in points (logical pixels): macOS reports it in points times the primary
-/// display's scale, whatever display it is on.
+/// The cursor in points (logical pixels), asked of AppKit directly.
 #[cfg(target_os = "macos")]
-fn cursor_position(app: &AppHandle) -> Option<(f64, f64)> {
-    let c = app.cursor_position().ok()?;
-    let primary = app.primary_monitor().ok().flatten().map_or(1.0, |m| m.scale_factor());
-    Some((c.x / primary, c.y / primary))
+fn cursor_position(_app: &AppHandle) -> Option<(f64, f64)> {
+    Some(macos::cursor_position())
 }
 
 /// Linux (notably Wayland) can't report the global cursor position, so instead the
@@ -465,10 +453,10 @@ fn apply_config(app: AppHandle, state: tauri::State<AppState>, config: Config) -
     *CONFIG.write().unwrap() = config;
     if lang_changed {
         rebuild_tray_menu(&app);
+        #[cfg(target_os = "macos")]
+        macos::rebuild_app_menu(&app);
     }
     position_island(&app);
-    #[cfg(target_os = "macos")]
-    set_island_level(&app);
     // Compared with the shortcut that actually registered rather than the previous
     // config, so one that failed (another app held it) is tried again next time.
     let mut registered = state.hotkey.lock().unwrap();
@@ -653,6 +641,11 @@ fn open_settings(app: AppHandle) {
 
 #[tauri::command]
 fn focus_island(app: AppHandle) {
+    // On macOS the island is a panel: `set_focus` would activate Ghars, and tao's
+    // `set_focusable` doesn't apply to it.
+    #[cfg(target_os = "macos")]
+    macos::focus_island(&app);
+    #[cfg(not(target_os = "macos"))]
     if let Some(win) = island(&app) {
         let _ = win.set_focusable(true);
         let _ = win.set_focus();
@@ -661,6 +654,9 @@ fn focus_island(app: AppHandle) {
 
 #[tauri::command]
 fn release_island_focus(app: AppHandle) {
+    #[cfg(target_os = "macos")]
+    macos::release_island_focus(&app);
+    #[cfg(not(target_os = "macos"))]
     if let Some(win) = island(&app) {
         let _ = win.set_focusable(false);
     }
@@ -765,14 +761,20 @@ fn show_settings(app: &AppHandle) {
             .decorations(true)
             .title_bar_style(tauri::TitleBarStyle::Overlay)
             .hidden_title(true)
-            // Offset of the buttons from the top-left; centres the 14 px buttons in the 40 px bar.
-            .traffic_light_position(tauri::LogicalPosition::new(16.0, 13.0));
+            // tao makes the title bar (the button height, 16 pt, plus y) tall and AppKit centres
+            // the buttons in it, so y = 40 - 16 centres them in the page's 40 px bar; x is the
+            // inset of the first button, as in Apple's own apps.
+            .traffic_light_position(tauri::LogicalPosition::new(20.0, 24.0));
         #[cfg(not(target_os = "macos"))]
         let builder = builder.decorations(false);
         let built = builder.build();
         OPENING.store(false, Ordering::SeqCst);
-        if let Err(e) = built {
-            log::error!("Could not open the settings window: {e}");
+        match built {
+            #[cfg(target_os = "macos")]
+            Ok(win) => macos::allow_full_screen(&win),
+            #[cfg(not(target_os = "macos"))]
+            Ok(_) => {}
+            Err(e) => log::error!("Could not open the settings window: {e}"),
         }
     });
 }
@@ -976,10 +978,12 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
             .ok_or_else(|| tauri::Error::AssetNotFound("app icon".into()))?
             .clone(),
     );
-    let tray = builder
+    // A click on a menu bar icon opens its menu, as everywhere on macOS (the menu has
+    // Settings… and Quit). On Windows a left click opens the settings instead.
+    let builder = builder
         .tooltip("Ghars")
         .menu(&tray_menu(app)?)
-        .show_menu_on_left_click(false)
+        .show_menu_on_left_click(cfg!(target_os = "macos"))
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
                 let _ = app.emit_to("island", "hotkey", "open");
@@ -1001,18 +1005,19 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                 });
             }
             _ => {}
-        })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                show_settings(tray.app_handle());
-            }
-        })
-        .build(app)?;
+        });
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.on_tray_icon_event(|tray, event| {
+        if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            button_state: MouseButtonState::Up,
+            ..
+        } = event
+        {
+            show_settings(tray.app_handle());
+        }
+    });
+    let tray = builder.build(app)?;
     *app.state::<AppState>().tray.lock().unwrap() = Some(tray);
     Ok(())
 }
@@ -1035,7 +1040,7 @@ pub fn end_expired_pause(app: &AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_settings(app)
         }))
@@ -1065,7 +1070,12 @@ pub fn run() {
                     }
                 })
                 .build(),
-        )
+        );
+    // The island is an NSPanel (see `macos::make_island_panel`), and the app menu quits the
+    // way the tray does.
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_nspanel::init()).menu(macos::app_menu);
+    builder
         .manage(AppState::default())
         .on_window_event(track_island_geometry)
         .invoke_handler(tauri::generate_handler![
@@ -1101,6 +1111,8 @@ pub fn run() {
 
             let handle = app.handle().clone();
             build_tray(&handle)?;
+            #[cfg(target_os = "macos")]
+            macos::make_island_panel(&handle);
             if let Some(win) = island(&handle) {
                 let _ = win.set_size(tauri::LogicalSize::new(WIN_W, WIN_H));
                 // Linux has no hit-testing (the window hugs the island instead), so there
@@ -1110,6 +1122,9 @@ pub fn run() {
             }
             position_island(&handle);
             if let Some(win) = island(&handle) {
+                #[cfg(target_os = "macos")]
+                macos::set_island_visible(&handle, true);
+                #[cfg(not(target_os = "macos"))]
                 let _ = win.show();
                 let state = handle.state::<AppState>();
                 state.island_shown.store(true, Ordering::Relaxed);

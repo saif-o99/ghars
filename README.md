@@ -109,7 +109,8 @@ Requests from web pages (anything sending an `Origin` header, or a `Host` other 
 | Island, hooks, hotkey, prayer times | ✓ | ✓ | ✓ (hotkey: see Wayland below) |
 | Click-through around the island | ✓ | ✓ | window resizes to fit the island instead |
 | Island on the side edges | ✓ | ✓ | top edge only |
-| Hide during full screen | ✓ (system API) | ✓ (window size) | ✓ X11 (window size) |
+| Hide during full screen | ✓ (system API) | ✓ (window list) | ✓ X11 (window size) |
+| Tray icon click | left: settings, right: menu | menu | menu |
 
 On Linux, a compositing window manager is needed for transparency, and any click on the tray icon
 opens its menu (there's no left-click action or tooltip).

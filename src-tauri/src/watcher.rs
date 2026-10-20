@@ -46,6 +46,11 @@ impl Watcher {
         if full == self.hidden_for_fullscreen {
             return;
         }
+        if full {
+            log::info!("A full-screen app is in front; hiding the island");
+        } else {
+            log::info!("Showing the island again (no full-screen app in front, or hiding is off)");
+        }
         self.hidden_for_fullscreen = full;
         state.fullscreen.store(full, Ordering::Relaxed);
         crate::sync_island_visibility(app);
@@ -73,20 +78,7 @@ fn is_fullscreen(_app: &AppHandle) -> bool {
 
 #[cfg(target_os = "macos")]
 fn is_fullscreen(app: &AppHandle) -> bool {
-    let Ok(w) = active_win_pos_rs::get_active_window() else {
-        return false;
-    };
-    if w.process_id == std::process::id() as u64 {
-        return false;
-    }
-    let p = w.position;
-    let Ok(Some(m)) = app.monitor_from_point(p.x + p.width / 2.0, p.y + p.height / 2.0) else {
-        return false;
-    };
-    // active-win-pos-rs reports logical points on macOS.
-    let scale = m.scale_factor();
-    let (mw, mh) = (m.size().width as f64 / scale, m.size().height as f64 / scale);
-    p.width >= mw - 1.0 && p.height >= mh - 1.0
+    crate::macos::is_fullscreen(app)
 }
 
 /// active-win-pos-rs reports physical pixels here, but `monitor_from_point` takes GTK's
