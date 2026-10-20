@@ -55,7 +55,9 @@ pub fn make_island_panel(app: &AppHandle) {
     if let Err(e) = panel.add_style_mask(NSWindowStyleMask::NonactivatingPanel) {
         log::error!("Could not make the island non-activating: {e}");
     }
-    panel.set_collection_behavior(island_spaces(CONFIG.read().unwrap().hide_in_fullscreen));
+    let hide = CONFIG.read().unwrap().hide_in_fullscreen;
+    SPACES_HIDE.store(hide, Ordering::SeqCst);
+    panel.set_collection_behavior(island_spaces(hide));
     panel.set_level(ISLAND_LEVEL);
     log::info!("The island is a non-activating panel, at window level {ISLAND_LEVEL}");
 }
@@ -75,13 +77,26 @@ fn island_spaces(hide_in_fullscreen: bool) -> NSWindowCollectionBehavior {
     }
 }
 
-/// Re-applies the island's Spaces behaviour after the settings change.
+/// The "Hide during full screen" value the island's Spaces behaviour was last set for.
+static SPACES_HIDE: AtomicBool = AtomicBool::new(true);
+
+/// Re-applies the island's Spaces behaviour when "Hide during full screen" changes. macOS
+/// only re-evaluates which Spaces a window on screen belongs to when it is ordered out and in
+/// again, so a visible island is hidden and shown once (only on an actual change).
 pub fn sync_full_screen_spaces(app: &AppHandle) {
     let hide = CONFIG.read().unwrap().hide_in_fullscreen;
+    if SPACES_HIDE.swap(hide, Ordering::SeqCst) == hide {
+        return;
+    }
     let app2 = app.clone();
     let _ = app.run_on_main_thread(move || {
         if let Ok(panel) = app2.get_webview_panel("island") {
             panel.set_collection_behavior(island_spaces(hide));
+            if panel.is_visible() {
+                panel.hide();
+                panel.show();
+            }
+            log::info!("Island joins full-screen Spaces: {}", !hide);
         }
     });
 }
