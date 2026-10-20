@@ -1,0 +1,52 @@
+[package]
+name = "ghars"
+version = "0.2.0"
+description = "Istighfar and adhkar in the gaps of your workday"
+authors = ["Ghars contributors"]
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "ghars_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+tauri-plugin-store = "2.5.0"
+tauri-plugin-autostart = "2.7.0"
+tauri-plugin-global-shortcut = "2.4.1"
+tauri-plugin-single-instance = "2.5.4"
+tiny_http = "0.12.0"
+dirs = "7.0.0"
+log = "0.4.34"
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-log = "2.10.1"
+tauri-plugin-updater = "2.14.0"
+
+
+# Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+
+[target."cfg(windows)".dependencies]
+windows = { version = "0.62.2", features = ["Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
+webview2-com = "0.39.1"
+
+[target."cfg(not(windows))".dependencies]
+active-win-pos-rs = "0.11.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"

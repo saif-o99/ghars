@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-simulate-agent"
+description = "Enables the simulate_agent command without any pre-configured scope."
+commands.allow = ["simulate_agent"]
+
+[[permission]]
+identifier = "deny-simulate-agent"
+description = "Denies the simulate_agent command without any pre-configured scope."
+commands.deny = ["simulate_agent"]

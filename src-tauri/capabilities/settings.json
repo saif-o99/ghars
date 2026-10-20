@@ -1,0 +1,31 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "settings",
+  "description": "The settings window: configuration, AI tool hooks, backups, updates and its own title bar",
+  "windows": ["settings"],
+  "permissions": [
+    "core:default",
+    "store:default",
+    "autostart:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "allow-apply-config",
+    "allow-pause-island",
+    "allow-island-paused",
+    "allow-list-monitors",
+    "allow-export-backup",
+    "allow-import-backup",
+    "allow-simulate-agent",
+    "allow-integrations-status",
+    "allow-integration-install",
+    "allow-integration-uninstall",
+    "allow-install-skill",
+    "allow-server-port",
+    "allow-server-error",
+    "allow-check-update",
+    "allow-pending-update",
+    "allow-install-update"
+  ]
+}

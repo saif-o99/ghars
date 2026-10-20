@@ -1,0 +1,152 @@
+name: Release
+
+# Push a tag like v0.2.0 to build installers for Windows, macOS and Linux and
+# attach them to a draft GitHub release. The tag must match the app version
+# (see docs/RELEASING.md).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+# Third-party actions are pinned to full commit SHAs; the comment says which release.
+# No dependency caches here: a release must not build from a cache that another
+# workflow run could have written.
+jobs:
+  version:
+    name: Check tag matches version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Compare the tag with package.json, Cargo.toml and tauri.conf.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          conf=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          cargo=$(awk -F'"' '/^\[/ { s = ($0 == "[package]") } s && /^version *=/ { print $2; exit }' src-tauri/Cargo.toml)
+          echo "tag: $TAG, package.json: $pkg, Cargo.toml: $cargo, tauri.conf.json: $conf"
+          if [ "$pkg" != "$cargo" ] || [ "$pkg" != "$conf" ]; then
+            echo "::error::The versions in package.json ($pkg), src-tauri/Cargo.toml ($cargo) and src-tauri/tauri.conf.json ($conf) differ."
+            exit 1
+          fi
+          if [ "$TAG" != "v$pkg" ]; then
+            echo "::error::Tag $TAG doesn't match the app version $pkg (expected v$pkg)."
+            exit 1
+          fi
+
+      # The updater endpoint starts as a placeholder until the GitHub repository exists, and
+      # every build needs the updater key to sign its update (see docs/RELEASING.md).
+      - name: Check the updater setup
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if grep -q 'OWNER/REPO' src-tauri/tauri.conf.json; then
+            echo "::error::src-tauri/tauri.conf.json still has the OWNER/REPO placeholder in plugins.updater.endpoints."
+            exit 1
+          fi
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::The TAURI_SIGNING_PRIVATE_KEY secret isn't set, so updates can't be signed."
+            exit 1
+          fi
+
+  build:
+    needs: version
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin"
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin"
+          - platform: ubuntu-22.04
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libxdo-dev libxcb1-dev
+
+      # The pnpm version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch
+        with:
+          toolchain: stable
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - run: pnpm install --frozen-lockfile
+
+      # Sign and notarize the macOS app when the Apple secrets are set (see docs/RELEASING.md).
+      # Without them the build still succeeds, unsigned. The secrets are only given to the
+      # build step that needs them, never written to $GITHUB_ENV.
+      - name: Check for Apple secrets
+        id: apple
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::warning::Apple secrets not set: the macOS app will be unsigned."
+          else
+            echo "sign=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and upload (signed macOS)
+        if: steps.apple.outputs.sign == 'true'
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Ghars ${{ github.ref_name }}"
+          releaseBody: "Download the installer for your system below."
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+
+      # Unset Apple variables (rather than empty ones) so Tauri skips Apple signing. The
+      # updater key signs the update itself, so every build gets it.
+      - name: Build and upload
+        if: steps.apple.outputs.sign != 'true'
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Ghars ${{ github.ref_name }}"
+          releaseBody: "Download the installer for your system below."
+          releaseDraft: true
+          prerelease: false
+          # latest.json for the updater; each build adds its platforms to it.
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}

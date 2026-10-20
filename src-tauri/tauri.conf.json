@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ghars",
+  "version": "0.2.0",
+  "identifier": "com.ghars.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1437",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "island",
+        "title": "Ghars",
+        "url": "index.html",
+        "width": 600,
+        "height": 520,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "shadow": false,
+        "focus": false,
+        "focusable": false,
+        "visible": false,
+        "visibleOnAllWorkspaces": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ipc: http://ipc.localhost",
+      "devCsp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUyNUMwMTVCRjFCNTBDRUQKUldUdERMWHhXd0ZjNGltUVh4QTNTVEdUMG5WNGpDemhrcTM0VzV3K1VOLzBOLzJoOGM2VFA5Nm0K",
+      "endpoints": [
+        "https://github.com/saif-o99/ghars/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "shortDescription": "Istighfar and adhkar in the gaps of your workday",
+    "longDescription": "Ghars is a small island at the top of your screen for istighfar and adhkar. It opens by itself while your AI coding agent is working, so the waiting time becomes remembrance.",
+    "category": "Lifestyle",
+    "copyright": "Copyright © 2026 Ghars contributors",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
+  }
+}

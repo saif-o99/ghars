@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-server-port"
+description = "Enables the server_port command without any pre-configured scope."
+commands.allow = ["server_port"]
+
+[[permission]]
+identifier = "deny-server-port"
+description = "Denies the server_port command without any pre-configured scope."
+commands.deny = ["server_port"]

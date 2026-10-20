@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-integrations-status"
+description = "Enables the integrations_status command without any pre-configured scope."
+commands.allow = ["integrations_status"]
+
+[[permission]]
+identifier = "deny-integrations-status"
+description = "Denies the integrations_status command without any pre-configured scope."
+commands.deny = ["integrations_status"]

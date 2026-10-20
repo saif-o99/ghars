@@ -1,0 +1,256 @@
+/* Theme variables. Layout lives in island.css; these only set colours, fonts
+   and decorations. Add a theme by adding a block here and an entry in themes.ts. */
+
+.theme-graphite {
+  --bg: linear-gradient(180deg, #18191c, #111214); --fg: #ededee; --muted: #8a8c90; --line: rgba(255, 255, 255, 0.08);
+  --accent: #34d399; --on-accent: #052e1f; --accent-text: #34d399;
+  --tab-bg: rgba(255, 255, 255, 0.05); --tab-fg: #c9cbcf;
+  --ar-font: "Amiri", serif; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif; --count-weight: 600;
+  --track: rgba(255, 255, 255, 0.08); --bar: linear-gradient(90deg, #059669, #6ee7b7);
+  --isl-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.island.theme-graphite .tab { border-color: transparent; }
+
+.theme-fes {
+  --bg: #082f33; --fg: #f4ead3; --muted: #97b8b2; --line: rgba(212, 169, 55, 0.45);
+  --accent: #d4a937; --on-accent: #0b1d20; --head-fade: rgba(8, 47, 51, 0.85);
+  --tab-bg: rgba(8, 47, 51, 0.8); --tab-fg: #f4ead3;
+  --ar-font: "Amiri", serif; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(244, 234, 211, 0.12); --bar: linear-gradient(90deg, #c45a3c, #d4a937);
+}
+
+.theme-riad {
+  --bg: #f7f1e3; --fg: #173f35; --muted: #6c7f73; --line: rgba(11, 110, 79, 0.35);
+  --accent: #0b6e4f; --on-accent: #f7f1e3; --accent-text: #0b6e4f; --head-fade: rgba(247, 241, 227, 0.55);
+  --tab-bg: #fffaf0; --tab-fg: #0b6e4f;
+  --ar-font: "Amiri", serif; --ar-color: #123a30; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(11, 110, 79, 0.12); --bar: linear-gradient(90deg, #0b6e4f, #c45a3c);
+  --isl-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 0 0 1px var(--line);
+}
+
+.theme-emerald {
+  --bg: #0b3d2f; --fg: #f6efe2; --muted: #9cc0b0; --line: rgba(201, 122, 74, 0.5);
+  --accent: #d08a5a; --on-accent: #1d0f07; --head-fade: rgba(11, 61, 47, 0.85);
+  --tab-bg: rgba(11, 61, 47, 0.85); --tab-fg: #f6efe2;
+  --ar-font: "Noto Naskh Arabic", serif; --ar-scale: 0.9; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(246, 239, 226, 0.12); --bar: linear-gradient(90deg, #f6efe2, #d08a5a);
+}
+
+.theme-chefchaouen {
+  --bg: #0f2f5a; --fg: #f3f6fb; --muted: #9db4d6; --line: rgba(190, 210, 240, 0.4);
+  --accent: #e9eef4; --on-accent: #0f2f5a; --head-fade: rgba(15, 47, 90, 0.85);
+  --tab-bg: rgba(15, 47, 90, 0.85); --tab-fg: #f3f6fb;
+  --ar-font: "Amiri", serif; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(243, 246, 251, 0.12); --bar: linear-gradient(90deg, #5b8fd1, #f3f6fb);
+}
+
+.theme-clay {
+  --bg: #e6ebe5; --fg: #2f3a33; --muted: #7b877f; --line: transparent;
+  --accent: #5f8b6e; --on-accent: #ffffff; --accent-text: #4e7a5d;
+  --tab-bg: #e6ebe5; --tab-fg: #5d6a61;
+  --ar-font: "Alexandria", sans-serif; --ar-scale: 0.92; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif; --count-weight: 600;
+  --track: #d3dad2; --bar: #5f8b6e;
+  --isl-shadow: 6px 8px 18px rgba(80, 95, 85, 0.35), inset 1px 1px 0 #ffffff;
+  --btn-shadow: 3px 3px 6px #c3cbc2, -3px -3px 6px #ffffff;
+}
+.island.theme-clay .tab { box-shadow: 3px 3px 6px #c3cbc2, -3px -3px 6px #ffffff; border-color: transparent; }
+.island.theme-clay .tab-ind { box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.18); }
+.island.theme-clay .progress { box-shadow: inset 2px 2px 4px #c3cbc2, inset -2px -2px 4px #fff; height: 6px; border-radius: 3px; }
+
+/* A transparent window cannot blur the desktop behind it, so Glass is a tinted
+   translucent panel with a specular sheen. */
+.theme-glass {
+  --bg: linear-gradient(140deg, rgba(34, 41, 56, 0.94), rgba(10, 13, 20, 0.93));
+  --fg: #f6f8fb; --muted: rgba(235, 241, 248, 0.7); --line: rgba(255, 255, 255, 0.22);
+  --accent: #bfe9ff; --on-accent: #0b2233; --accent-text: #ffffff;
+  --tab-bg: rgba(255, 255, 255, 0.1); --tab-fg: #e9f1f8;
+  --ar-font: "IBM Plex Sans Arabic", sans-serif; --ar-weight: 300; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif; --count-weight: 500;
+  --track: rgba(255, 255, 255, 0.16); --bar: linear-gradient(90deg, rgba(255, 255, 255, 0.5), #bfe9ff);
+  --isl-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.theme-glass::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; z-index: 0;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 32%, transparent 55%, rgba(255, 255, 255, 0.06) 100%);
+}
+.island.theme-glass .tab-ind { background: rgba(255, 255, 255, 0.9); }
+.island.theme-glass .tab.active { color: #0e1621; }
+
+.theme-obsidian {
+  --bg: radial-gradient(ellipse at 50% -10%, #2a2416 0%, #0c0c0d 55%); --fg: #f3e7c4; --muted: #8f8672;
+  --line: rgba(214, 181, 108, 0.4); --accent: #d6b56c; --on-accent: #141109;
+  --tab-bg: transparent; --tab-fg: #cdbf9a;
+  --ar-font: "Aref Ruqaa", serif; --ar-scale: 1.2; --ar-color: #e9cf86; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(214, 181, 108, 0.14); --bar: linear-gradient(90deg, #8a6d2d, #f1d68f);
+}
+.island.theme-obsidian .tab { border-color: transparent; border-radius: 0; padding: 2px 6px; }
+.island.theme-obsidian .tab.active { color: #f1d68f; }
+.island.theme-obsidian .tab-ind { background: transparent; border-radius: 0; border-bottom: 1px solid #d6b56c; }
+
+.theme-minimal {
+  --bg: #000000; --fg: #f5f5f7; --muted: #8e8e93; --line: rgba(255, 255, 255, 0.1);
+  --accent: #30d158; --on-accent: #00210b; --accent-text: #f5f5f7;
+  --tab-bg: #1c1c1e; --tab-fg: #aeaeb2;
+  --ar-font: "IBM Plex Sans Arabic", sans-serif; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: #2c2c2e; --bar: #30d158;
+}
+.island.theme-minimal .tab { border-color: transparent; }
+.island.theme-minimal .tab-ind { background: #3a3a3c; }
+.island.theme-minimal .tab.active { color: #fff; }
+
+.theme-dusk {
+  --bg: linear-gradient(180deg, #f3a37b 0%, #d07386 42%, #5a3f86 78%, #2e2459 100%);
+  --fg: #fff8f0; --muted: rgba(255, 240, 235, 0.82); --line: rgba(255, 255, 255, 0.4);
+  --accent: #ffd9a8; --on-accent: #5a2a3c; --accent-text: #fff1dc;
+  --tab-bg: rgba(255, 255, 255, 0.16); --tab-fg: #ffffff;
+  --ar-font: "El Messiri", sans-serif; --ar-weight: 600; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(255, 255, 255, 0.22); --bar: #ffd9a8;
+}
+.theme-dusk .ar { text-shadow: 0 2px 10px rgba(80, 30, 60, 0.35); }
+
+.theme-manuscript {
+  --bg: #f3e9d4; --fg: #1d1a16; --muted: #7a6550; --line: rgba(139, 46, 31, 0.35);
+  --accent: #8b2e1f; --on-accent: #f8efdc; --accent-text: #8b2e1f;
+  --tab-bg: #f8f0de; --tab-fg: #8b2e1f;
+  --ar-font: "Amiri", serif; --ar-weight: 700; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --tr-font: "Cormorant Garamond", serif; --tr-style: italic; --tr-size: 13px;
+  --track: rgba(139, 46, 31, 0.12); --bar: linear-gradient(90deg, #8b2e1f, #b8892b);
+  --isl-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.theme-lantern {
+  --bg: radial-gradient(circle at 18% 60%, rgba(255, 170, 60, 0.28), transparent 45%), linear-gradient(180deg, #101b30, #070d19);
+  --fg: #fbefd9; --muted: #a39a8a; --line: rgba(242, 184, 75, 0.35);
+  --accent: #f2b84b; --on-accent: #1b1205; --tab-bg: rgba(16, 27, 48, 0.8); --tab-fg: #fbefd9;
+  --ar-font: "Noto Kufi Arabic", sans-serif; --ar-scale: 0.86; --ar-weight: 600; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(251, 239, 217, 0.1); --bar: linear-gradient(90deg, #c0662a, #f2b84b);
+}
+.theme-lantern .ar { text-shadow: 0 0 18px rgba(242, 184, 75, 0.35); }
+
+.theme-iznik {
+  --bg: radial-gradient(ellipse 90% 70% at 50% 110%, rgba(42, 157, 154, 0.1), transparent 70%), #f7f5ef;
+  --fg: #14306b; --muted: #687391; --line: rgba(29, 63, 143, 0.28);
+  --accent: #1d3f8f; --on-accent: #f7f5ef; --accent-text: #1d3f8f;
+  --tab-bg: #fdfcf8; --tab-fg: #1d3f8f;
+  --ar-font: "Scheherazade New", serif; --ar-scale: 1.12; --ar-color: #102a5c; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(29, 63, 143, 0.12); --bar: linear-gradient(90deg, #1d3f8f, #2a9d9a 60%, #c8312b);
+  --isl-shadow: 0 10px 28px rgba(10, 25, 60, 0.4), inset 0 0 0 1px rgba(29, 63, 143, 0.3);
+}
+
+.theme-mashrabiya {
+  --bg: radial-gradient(ellipse 70% 120% at 92% 0%, rgba(232, 168, 92, 0.3), transparent 62%), linear-gradient(180deg, #2a1a0f, #1a100a);
+  --fg: #f6e7cf; --muted: #b39b7e; --line: rgba(224, 164, 88, 0.32);
+  --accent: #e0a458; --on-accent: #2a1708;
+  --tab-bg: rgba(42, 26, 15, 0.85); --tab-fg: #f6e7cf;
+  --ar-font: "Aref Ruqaa", serif; --ar-scale: 1.14; --ar-color: #f9e2b8; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(246, 231, 207, 0.1); --bar: linear-gradient(90deg, #9a5a2a, #e0a458);
+  --isl-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(224, 164, 88, 0.22);
+}
+
+.theme-isfahan {
+  --bg: linear-gradient(180deg, #13296e, #0b1a4a); --fg: #f3efe2; --muted: #9fb0d8; --line: rgba(63, 193, 201, 0.38);
+  --accent: #3fc1c9; --on-accent: #06243a; --accent-text: #6ad8de; --head-fade: rgba(19, 41, 110, 0.9);
+  --tab-bg: rgba(11, 26, 74, 0.8); --tab-fg: #f3efe2;
+  --ar-font: "Noto Naskh Arabic", serif; --ar-scale: 0.92; --ar-color: #fbf3dc; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(243, 239, 226, 0.12); --bar: linear-gradient(90deg, #3fc1c9, #f2c14e);
+}
+
+.theme-fajr {
+  --bg: linear-gradient(180deg, #dcdff2 0%, #e9e3ef 55%, #f7e4d8 100%);
+  --fg: #2a2d4f; --muted: #6e6f8f; --line: rgba(90, 85, 150, 0.22);
+  --accent: #5a54a6; --on-accent: #f7f3fb; --accent-text: #4a4596;
+  --tab-bg: rgba(255, 255, 255, 0.55); --tab-fg: #4a4596;
+  --ar-font: "Alexandria", sans-serif; --ar-scale: 0.92; --ar-color: #262a4d; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif; --count-weight: 600;
+  --track: rgba(90, 85, 150, 0.14); --bar: linear-gradient(90deg, #5a54a6, #e79a7a);
+  --isl-shadow: 0 12px 30px rgba(40, 40, 80, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.theme-marrakech {
+  --bg: linear-gradient(180deg, #b24a2f, #8e3523); --fg: #fff1e2; --muted: rgba(255, 228, 205, 0.8); --line: rgba(255, 226, 190, 0.35);
+  --accent: #f3c27a; --on-accent: #5a1f12; --accent-text: #ffd99a;
+  --tab-bg: rgba(110, 36, 22, 0.45); --tab-fg: #fff1e2;
+  --ar-font: "El Messiri", sans-serif; --ar-weight: 600; --ar-color: #fff4e6; --ui-font: "Rubik", "Noto Sans Arabic", "Noto Sans Bengali", sans-serif;
+  --track: rgba(255, 241, 226, 0.2); --bar: #f3c27a;
+}
+.theme-marrakech .ar { text-shadow: 0 1px 8px rgba(70, 20, 10, 0.3); }
+
+/* ---------------- decorations ---------------- */
+
+.deco { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+
+/* zellige band across the top of the full view */
+.deco-zellige .band {
+  position: absolute; inset: 0 0 auto 0; height: 44px; background-image: var(--tile); background-size: 44px 44px;
+  border-bottom: 2px solid var(--accent); transition: opacity 0.25s;
+}
+.deco-zellige .band::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 25%, var(--head-fade)); }
+.island:not(.is-expanded) .deco-zellige .band { opacity: 0; }
+
+.deco-hairline .line { position: absolute; inset: 6px; border-radius: calc(var(--radius) - 6px); box-shadow: inset 0 0 0 1px rgba(214, 181, 108, 0.35); }
+.deco-hairline .line::before,
+.deco-hairline .line::after {
+  content: ""; position: absolute; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; background: #d6b56c; transform: rotate(45deg);
+}
+.deco-hairline .line::before { top: -4px; }
+.deco-hairline .line::after { bottom: -4px; }
+.island.is-collapsed .deco-hairline .line { inset: 3px; border-radius: calc(var(--radius) - 3px); }
+.island.is-collapsed .deco-hairline .line::before,
+.island.is-collapsed .deco-hairline .line::after { display: none; }
+
+.deco-dunes svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 38%; }
+.deco-dunes .moon {
+  position: absolute; right: 22px; top: 14px; width: 18px; height: 18px; border-radius: 50%;
+  box-shadow: -5px 3px 0 0 #fff1dc; transform: rotate(-20deg); transition: opacity 0.25s;
+}
+.island:not(.is-expanded) .deco-dunes .moon { opacity: 0; }
+
+.deco-arch svg { position: absolute; left: 16px; top: 42px; width: calc(100% - 112px); height: calc(100% - 46px); opacity: 0.5; transition: opacity 0.25s; }
+.island:not(.is-expanded) .deco-arch svg { opacity: 0; }
+
+.deco-paper { background-size: 140px 140px; }
+.deco-paper .rule {
+  position: absolute; inset: 7px; border-radius: calc(var(--radius) - 7px);
+  box-shadow: inset 0 0 0 1px #8b2e1f, inset 0 0 0 4px transparent, inset 0 0 0 5px #b8892b;
+}
+.island.is-collapsed .deco-paper .rule { inset: 3px; border-radius: calc(var(--radius) - 3px); box-shadow: inset 0 0 0 1px #8b2e1f; }
+
+/* graphite: an emerald hairline and a soft glow along the top edge */
+.deco-glow .hair {
+  position: absolute; left: 18%; right: 18%; top: 0; height: 1.5px;
+  background: linear-gradient(90deg, transparent, #34d399 50%, transparent); opacity: 0.85;
+}
+.deco-glow .halo {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 70% at 50% 0%, rgba(52, 211, 153, 0.13), transparent 70%);
+}
+
+/* iznik: a scalloped cobalt border along the top */
+.deco-iznik .band {
+  position: absolute; inset: 0 0 auto 0; height: 16px; background-size: 28px 16px; background-repeat: repeat-x; transition: opacity 0.25s;
+}
+.island:not(.is-expanded) .deco-iznik .band { opacity: 0; }
+
+/* mashrabiya: lamplight falling through a wooden screen in the top corner */
+.deco-lattice .screen {
+  position: absolute; inset: 0; background-size: 14px 14px; opacity: 0.75; transition: opacity 0.25s;
+  -webkit-mask-image: radial-gradient(ellipse 60% 110% at 100% 0%, #000 25%, transparent 72%);
+  mask-image: radial-gradient(ellipse 60% 110% at 100% 0%, #000 25%, transparent 72%);
+}
+.island:not(.is-expanded) .deco-lattice .screen { opacity: 0.35; }
+
+/* fajr: first light on the horizon and the morning star */
+.deco-horizon .sun {
+  position: absolute; left: 50%; bottom: -45%; width: 90%; height: 80%; transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 190, 140, 0.75), rgba(255, 205, 170, 0.25) 55%, transparent 75%);
+}
+.deco-horizon .star {
+  position: absolute; left: 18%; top: 14px; width: 4px; height: 4px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.95), 0 0 12px 4px rgba(120, 110, 200, 0.45); transition: opacity 0.25s;
+}
+.island:not(.is-expanded) .deco-horizon .star { opacity: 0; }
+
+/* marrakech: a crenellated medina wall along the bottom, over rough plaster */
+.deco-merlons .wall {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background-size: 28px 17px; background-repeat: repeat-x;
+  background-position: bottom left; opacity: 0.8; transition: opacity 0.25s;
+}
+.island:not(.is-expanded) .deco-merlons .wall { opacity: 0; }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pause-island"
+description = "Enables the pause_island command without any pre-configured scope."
+commands.allow = ["pause_island"]
+
+[[permission]]
+identifier = "deny-pause-island"
+description = "Denies the pause_island command without any pre-configured scope."
+commands.deny = ["pause_island"]

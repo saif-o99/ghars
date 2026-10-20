@@ -1,0 +1,787 @@
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* The wrap positions and scales the island inside the (larger, click-through) window. */
+.wrap {
+  position: absolute;
+  top: 8px;
+}
+.wrap.align-center {
+  left: 50%;
+  transform: translateX(-50%) scale(var(--scale));
+  transform-origin: top center;
+}
+.wrap.align-left {
+  left: 12px;
+  transform: scale(var(--scale));
+  transform-origin: top left;
+}
+.wrap.align-right {
+  right: 12px;
+  transform: scale(var(--scale));
+  transform-origin: top right;
+}
+
+/* Notch style: flush with the top edge. The island is drawn wider by the shoulder
+   width on each side and cut to the notch outline with a mask (see shared/notch.ts),
+   so the shoulders always match the island's own background.
+   The background and its shadow are painted by .notch-bg, a copy of the outline behind
+   the island (see NotchBackdrop.tsx), so the shadow isn't re-blurred every time the
+   island's contents change. The slim bar is static and keeps a plain filter. */
+.wrap.notch {
+  top: 0;
+}
+.wrap.notch.slim {
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.42));
+}
+.wrap.notch .island,
+.wrap.notch .island.flash,
+.notch-bg {
+  box-shadow: none;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+.wrap.notch:not(.slim) .island {
+  background: transparent;
+}
+.wrap.notch .island.flash,
+.notch-bg.flash {
+  filter: brightness(1.18);
+}
+.notch-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.42));
+}
+.wrap.notch.edge-left .notch-backdrop {
+  filter: drop-shadow(10px 0 14px rgba(0, 0, 0, 0.42));
+}
+.wrap.notch.edge-right .notch-backdrop {
+  filter: drop-shadow(-10px 0 14px rgba(0, 0, 0, 0.42));
+}
+.wrap.slim .notch-backdrop {
+  visibility: hidden;
+}
+.wrap.dragging .notch-backdrop {
+  opacity: 0.92;
+}
+.notch-bg {
+  background: var(--bg);
+  transition:
+    width 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.08),
+    height 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.08);
+}
+/* The island keeps the theme's own ::before (Glass's sheen); don't paint it twice. */
+.notch-backdrop .notch-bg::before {
+  content: none;
+}
+.wrap.notch .island .layer {
+  left: 14px;
+  right: 14px;
+}
+.wrap.notch.edge-left .island .layer,
+.wrap.notch.edge-right .island .layer {
+  left: 0;
+  right: 0;
+  top: 14px;
+  bottom: 14px;
+}
+.wrap.edge-left,
+.wrap.edge-right {
+  filter: none;
+}
+.wrap.notch.slim.edge-left {
+  filter: drop-shadow(10px 0 14px rgba(0, 0, 0, 0.42));
+}
+.wrap.notch.slim.edge-right {
+  filter: drop-shadow(-10px 0 14px rgba(0, 0, 0, 0.42));
+}
+/* Slim: a thin accent bar flush with the edge until hovered. */
+.wrap.slim .island {
+  background: var(--accent);
+  box-shadow: none;
+  opacity: 0.85;
+}
+.wrap.slim .island > * {
+  display: none;
+}
+.wrap.slim.edge-top .island {
+  border-radius: 0 0 4px 4px !important;
+}
+.wrap.slim.edge-left .island {
+  border-radius: 0 4px 4px 0 !important;
+}
+.wrap.slim.edge-right .island {
+  border-radius: 4px 0 0 4px !important;
+}
+/* While being dragged. */
+.wrap.dragging .island {
+  cursor: grabbing;
+  opacity: 0.92;
+}
+/* Inner frame lines would run into the shoulders and along the screen edge. */
+.wrap.notch .deco-hairline .line,
+.wrap.notch .deco-paper .rule {
+  left: 20px;
+  right: 20px;
+  top: -8px;
+}
+
+.reduce-motion,
+.reduce-motion * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.island {
+  position: relative;
+  overflow: hidden;
+  outline: none;
+  color: var(--fg);
+  background: var(--bg);
+  box-shadow: var(--isl-shadow, 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 0 0 1px var(--line));
+  font-family: var(--ui-font);
+  transition:
+    width 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.08),
+    height 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.08),
+    border-radius 0.34s,
+    box-shadow 0.3s;
+}
+.island.flash {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 0 0 2px var(--accent), 0 0 24px -4px var(--accent);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s;
+}
+.is-collapsed .layer-pill,
+.is-compact .layer-compact,
+.is-expanded .layer-full {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.22s 0.12s;
+}
+
+/* ---------------- pill ---------------- */
+.layer-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.layer-pill .star {
+  width: 16px;
+  height: 16px;
+  --pill-hole: var(--solid);
+}
+.pill-label {
+  opacity: 0.85;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pill-count {
+  font-weight: 700;
+  color: var(--accent-text, var(--accent));
+}
+.pill-prayer {
+  font-size: 11px;
+  color: var(--muted);
+  padding-inline-start: 7px;
+  border-inline-start: 1px solid var(--line);
+}
+/* On a side edge the pill stands upright: star, count, then the prayer's name over its countdown. */
+.edge-left .layer-pill,
+.edge-right .layer-pill {
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+}
+.edge-left .pill-label,
+.edge-right .pill-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.edge-left .pill-count,
+.edge-right .pill-count {
+  font-size: 14px;
+  line-height: 1;
+  max-width: 100%;
+}
+.edge-left .pill-prayer,
+.edge-right .pill-prayer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 6px 0 0;
+  border-inline-start: 0;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  line-height: 1.1;
+  text-align: center;
+}
+.edge-left .pill-prayer-name,
+.edge-right .pill-prayer-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- compact ---------------- */
+.layer-compact {
+  display: grid;
+  grid-template-columns: 40px 1fr auto 30px 14px;
+  align-items: center;
+  gap: 10px;
+  padding-block: 0;
+  padding-inline: 20px 14px;
+}
+.layer-compact .badge {
+  width: 38px;
+  height: 38px;
+  --bg-solid: var(--solid);
+}
+.c-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.c-text .ar {
+  font-family: var(--ar-font);
+  font-weight: var(--ar-weight, 400);
+  font-size: calc(min(var(--ar-size), 22px) * var(--ar-scale, 1));
+  line-height: 1.45;
+  color: var(--ar-color, var(--fg));
+  direction: rtl;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c-text .tr {
+  font-size: 10.5px;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.layer-compact .count {
+  font: var(--count-weight, 700) 24px/1 var(--ui-font);
+  color: var(--accent-text, var(--accent));
+}
+.layer-compact .count small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.island .close {
+  align-self: start;
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0.7;
+}
+.island .close:hover {
+  opacity: 1;
+}
+
+/* ---------------- expanded ---------------- */
+.island .topbar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  height: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  z-index: 3;
+}
+.island .chip-slot {
+  display: flex;
+  min-width: 0;
+}
+.island .chip-slot.end {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.island .chip.notice {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+/* As wide as its longest line, next to the mosque; Arabic and Urdu lines line up on the right. */
+.c-notice {
+  justify-self: start;
+  max-width: 100%;
+  align-items: stretch;
+}
+.notice-title {
+  font: 600 15px/1.4 var(--ui-font);
+  color: var(--fg);
+}
+.island .chip {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tab-bg);
+  border: 1px solid var(--line);
+  color: var(--tab-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.island .icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  color: var(--tab-fg);
+  background: var(--tab-bg);
+  border: 1px solid var(--line);
+  opacity: 0.85;
+}
+.island .icon:hover {
+  opacity: 1;
+}
+
+/* Two equal tabs with one highlight that slides between them. */
+.island .tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.island .tab {
+  position: relative;
+  z-index: 1;
+  font: 600 12px/1.5 var(--ui-font);
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--tab-bg);
+  color: var(--tab-fg);
+  border: 1px solid var(--line);
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
+}
+.island .tab.active {
+  background: transparent;
+  color: var(--on-accent);
+  border-color: transparent;
+}
+.island .tab-ind {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: var(--tab-ind, var(--accent));
+  box-shadow: var(--tab-ind-shadow, none);
+  transition: transform 0.32s cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+.island .tabs.adhkar .tab-ind {
+  transform: translateX(calc(100% + 6px));
+}
+/* New text fades up when the tab or the dhikr changes. */
+.island .body .text {
+  animation: text-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes text-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+.island .body {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 6px;
+  padding: 2px 12px 10px 16px;
+  z-index: 2;
+}
+.island .text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  min-width: 0;
+}
+.island .packbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+/* Set chooser: looks like a dropdown so it's clear it switches sets. */
+.island .setpick {
+  position: relative;
+}
+.island .setchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 10px;
+  border-radius: 999px;
+  font: 600 11px/1.5 var(--ui-font);
+  color: var(--fg);
+  background: var(--tab-bg);
+  border: 1px solid var(--line);
+}
+.island .setchip svg {
+  width: 9px;
+  height: 9px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+  transition: transform 0.18s;
+}
+.island .setchip.open svg {
+  transform: rotate(180deg);
+}
+.island .setmenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  min-width: 170px;
+  max-height: 186px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--bg-solid, var(--solid, #16171a));
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  animation: fade-in 0.15s;
+}
+.island .setmenu button {
+  text-align: start;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font: 12px/1.4 var(--ui-font);
+  color: var(--fg);
+}
+.island .setmenu button:hover {
+  background: var(--tab-bg);
+}
+.island .setmenu button.on {
+  color: var(--accent-text, var(--accent));
+  font-weight: 600;
+}
+.island .itemnav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.island .packbar .nav {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--accent-text, var(--accent));
+}
+.island .packbar .nav:hover {
+  background: var(--tab-bg);
+}
+.island .note {
+  font-size: 10.5px;
+  color: var(--accent-text, var(--accent));
+}
+.island .text .ar {
+  font-family: var(--ar-font);
+  font-size: calc(var(--ar-size) * var(--ar-scale, 1));
+  font-weight: var(--ar-weight, 400);
+  line-height: 1.65;
+  direction: rtl;
+  color: var(--ar-color, var(--fg));
+}
+.island .text .ar.long {
+  line-height: 1.85;
+}
+.island .text .tr {
+  font: var(--tr-style, normal) var(--tr-size, 11px) var(--tr-font, var(--ui-font));
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.island .tr-wrap {
+  position: relative;
+  width: 100%;
+}
+/* Full translation, shown over the clamped one on hover. */
+.island .tr-full {
+  position: absolute;
+  top: -7px;
+  left: -10px;
+  right: -10px;
+  z-index: 5;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font: var(--tr-style, normal) var(--tr-size, 11px) / 1.5 var(--tr-font, var(--ui-font));
+  color: var(--fg);
+  background: var(--bg-solid, var(--solid, #16171a));
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  animation: fade-in 0.15s;
+}
+/* WebKit webviews (macOS, Linux) ignore scrollbar-width / scrollbar-color. */
+.island .setmenu::-webkit-scrollbar,
+.island .tr-full::-webkit-scrollbar {
+  width: 10px;
+}
+.island .setmenu::-webkit-scrollbar-track,
+.island .tr-full::-webkit-scrollbar-track {
+  background: transparent;
+}
+.island .setmenu::-webkit-scrollbar-thumb,
+.island .tr-full::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.island .setmenu::-webkit-scrollbar-corner,
+.island .setmenu::-webkit-scrollbar-button,
+.island .tr-full::-webkit-scrollbar-corner,
+.island .tr-full::-webkit-scrollbar-button {
+  display: none;
+  background: transparent;
+}
+.island .text .count {
+  position: relative;
+  font: var(--count-weight, 700) 32px/1 var(--ui-font);
+  color: var(--accent-text, var(--accent));
+  margin-top: 3px;
+}
+.island .arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.island .text .count small {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.island .check {
+  font-size: 16px;
+}
+.island .progress {
+  width: 78%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--track);
+  overflow: hidden;
+  margin-top: 3px;
+}
+.island .progress i {
+  display: block;
+  height: 100%;
+  background: var(--bar);
+  transition: width 0.2s;
+}
+.island .src {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.island .col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.island .arrow {
+  width: 34px;
+  height: 18px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--tab-bg);
+  color: var(--accent-text, var(--accent));
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  box-shadow: var(--btn-shadow, none);
+}
+.island .arrow:active {
+  transform: translateY(1px);
+}
+.island .hint {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 4;
+  font-size: 11px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--accent);
+  color: var(--on-accent);
+  animation: fade-in 0.25s;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+}
+
+/* Footer line: Hijri date on one side, next prayer (or the prayer note) on the other. */
+.island .meta {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 9px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 10.5px/1.4 var(--ui-font);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.island .meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.island .meta .now {
+  color: var(--accent-text, var(--accent));
+  font-weight: 600;
+}
+.wrap.notch .island .meta {
+  left: 32px;
+  right: 32px;
+}
+
+/* Listen button (top-left, mirrors the settings button). */
+.island .listen {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.island .listen svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+.island .listen .wave {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.island .listen.on {
+  opacity: 1;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: listen-pulse 1.4s ease-in-out infinite;
+}
+@keyframes listen-pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+/* Prayer note: a mosque in place of the star, and a faint larger one behind the text. */
+.layer-compact:has(.mosque) {
+  grid-template-columns: 50px 1fr auto 30px 14px;
+}
+.layer-compact .badge.mosque {
+  width: 50px;
+  height: 38px;
+}
+.mosque .m-body {
+  fill: var(--accent);
+}
+.mosque .m-cut {
+  fill: var(--bg-solid, var(--solid, #000));
+}
+/* The faint mosque sits at the far end, by the close button (mirrored for right-to-left). */
+.notice-art {
+  position: absolute;
+  inset-inline-end: 56px;
+  bottom: -2px;
+  height: 92%;
+  opacity: 0.09;
+  pointer-events: none;
+}
+.notice-art .m-body {
+  fill: var(--fg);
+}
+.notice-art .m-cut {
+  fill: transparent;
+}
