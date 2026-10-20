@@ -58,6 +58,8 @@ export interface Settings {
   /** How the island opens by itself when an AI tool starts working. */
   autoOpen: "compact" | "full" | "off";
   hideInFullscreen: boolean;
+  /** macOS: the floating island on the top edge sits over the menu bar, at the very top. */
+  islandOverMenuBar: boolean;
   hotkey: string;
   /** Daily hours when the island stays hidden ("HH:MM", may wrap past midnight). */
   quiet: { enabled: boolean; from: string; to: string };
@@ -104,6 +106,7 @@ export const DEFAULT_SETTINGS: Settings = {
   packMode: "auto",
   autoOpen: "compact",
   hideInFullscreen: true,
+  islandOverMenuBar: false,
   hotkey: DEFAULT_HOTKEY,
   quiet: { enabled: false, from: "22:00", to: "06:00" },
   customAdhkar: [],
@@ -166,6 +169,7 @@ function normalize(saved: Partial<Settings>): Settings {
     packMode: oneOf<Settings["packMode"]>(s.packMode, ["auto", ...PACK_ORDER], d.packMode),
     autoOpen: oneOf(s.autoOpen, ["compact", "full", "off"], d.autoOpen),
     hideInFullscreen: bool(s.hideInFullscreen, d.hideInFullscreen),
+    islandOverMenuBar: bool(s.islandOverMenuBar, d.islandOverMenuBar),
     hotkey: str(s.hotkey, d.hotkey),
     quiet: { enabled: bool(q.enabled, d.quiet.enabled), from: str(q.from, d.quiet.from), to: str(q.to, d.quiet.to) },
     customAdhkar: Array.isArray(s.customAdhkar)

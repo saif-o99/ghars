@@ -77,6 +77,8 @@ export const id: PartialLocale = {
     positionHelp: "Anda juga bisa menyeret panel ke mana saja di sepanjang tepi atas atau sisi layar.",
     slim: "Ramping saat tidak dipakai",
     slimHelp: "Saat tidak dipakai, panel mengecil menjadi garis tipis di tepi layar. Arahkan kursor ke garis itu untuk membukanya.",
+    overMenuBar: "Di atas bilah menu",
+    overMenuBarHelp: "Tepat di bagian atas layar, seperti di Windows. Bisa menutupi menu aplikasi yang panjang.",
     screen: "Layar",
     screenPrimary: "Layar utama",
     screenCursor: "Ikuti kursor",

@@ -77,6 +77,8 @@ export const ms: PartialLocale = {
     positionHelp: "Anda juga boleh menyeret pulau ke mana-mana di sepanjang tepi atas atau sisi skrin.",
     slim: "Nipis apabila tidak digunakan",
     slimHelp: "Apabila tidak digunakan, pulau mengecil menjadi bar nipis di tepi skrin. Letakkan penuding di atasnya untuk membukanya.",
+    overMenuBar: "Di atas bar menu",
+    overMenuBarHelp: "Betul-betul di bahagian atas skrin, seperti di Windows. Ia mungkin menutup menu aplikasi yang panjang.",
     screen: "Skrin",
     screenPrimary: "Skrin utama",
     screenCursor: "Ikut tetikus",

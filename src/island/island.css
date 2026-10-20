@@ -66,6 +66,10 @@ button {
   top: 0;
   pointer-events: none;
   filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.42));
+  /* Its own compositing layer: WebKit (macOS) doesn't clear the shadow it drew outside a
+     resizing shape in a transparent window, so each frame of the open/close animation left
+     a stale shadow behind. A separate layer is redrawn whole every frame. */
+  will-change: transform;
 }
 .wrap.notch.edge-left .notch-backdrop {
   filter: drop-shadow(10px 0 14px rgba(0, 0, 0, 0.42));

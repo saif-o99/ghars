@@ -78,6 +78,8 @@ export const tr: PartialLocale = {
     positionHelp: "Adayı sürükleyerek ekranın üst kenarında veya yanlarında istediğiniz yere de taşıyabilirsiniz.",
     slim: "Kullanılmadığında ince çubuk",
     slimHelp: "Kullanmadığınızda ada, ekran kenarında ince bir çubuğa dönüşür. Açmak için imleci çubuğun üzerine getirin.",
+    overMenuBar: "Menü çubuğunun üzerinde",
+    overMenuBarHelp: "Windows'taki gibi ekranın en üstünde. Uzun uygulama menülerini örtebilir.",
     screen: "Ekran",
     screenPrimary: "Ana ekran",
     screenCursor: "Farenin olduğu ekran",

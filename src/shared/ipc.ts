@@ -19,6 +19,8 @@ export interface IntegrationStatus {
   installed: boolean;
   configPath: string;
   note: string;
+  /** Codex only: connected, but Codex has not approved the Ghars hooks yet. */
+  needsApproval: boolean;
 }
 
 export interface HitRect {
@@ -46,6 +48,7 @@ export function applyConfig(s: Settings) {
   return invoke("apply_config", {
     config: {
       hideInFullscreen: s.hideInFullscreen,
+      islandOverMenuBar: s.islandOverMenuBar,
       hotkey: s.hotkey,
       uiLang: s.uiLang,
       islandEdge: s.islandEdge,

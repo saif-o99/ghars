@@ -48,11 +48,11 @@ async function installUpdate() {
 }
 
 const integrations = [
-  { id: "claude", name: "Claude Code", detected: true, installed: true, configPath: "~/.claude/settings.json", note: "" },
-  { id: "cursor", name: "Cursor", detected: true, installed: false, configPath: "~/.cursor/hooks.json", note: "" },
-  { id: "codex", name: "Codex CLI", detected: false, installed: false, configPath: "~/.codex/hooks.json", note: "" },
-  { id: "gemini", name: "Gemini CLI", detected: false, installed: false, configPath: "~/.gemini/settings.json", note: "" },
-  { id: "copilot", name: "GitHub Copilot", detected: true, installed: false, configPath: "~/.copilot/hooks/ghars.json", note: "Copilot CLI and Copilot agent mode in VS Code both use these hooks. Restart Copilot CLI to load them." },
+  { id: "claude", name: "Claude Code", detected: true, installed: true, configPath: "~/.claude/settings.json", note: "", needsApproval: false },
+  { id: "cursor", name: "Cursor", detected: true, installed: false, configPath: "~/.cursor/hooks.json", note: "", needsApproval: false },
+  { id: "codex", name: "Codex CLI", detected: false, installed: false, configPath: "~/.codex/hooks.json", note: "", needsApproval: false },
+  { id: "gemini", name: "Gemini CLI", detected: false, installed: false, configPath: "~/.gemini/settings.json", note: "", needsApproval: false },
+  { id: "copilot", name: "GitHub Copilot", detected: true, installed: false, configPath: "~/.copilot/hooks/ghars.json", note: "Copilot CLI and Copilot agent mode in VS Code both use these hooks. Restart Copilot CLI to load them.", needsApproval: false },
 ];
 
 mockWindows(location.pathname.includes("settings") ? "settings" : "island");

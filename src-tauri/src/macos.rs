@@ -2,7 +2,7 @@
 //! app menu.
 
 use crate::macos_geometry::{self, Bounds, WindowInfo};
-use crate::{AppState, WIN_H, WIN_W, island};
+use crate::{AppState, CONFIG, WIN_H, WIN_W, island};
 use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2_app_kit::{NSEvent, NSResponder, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask};
@@ -55,16 +55,35 @@ pub fn make_island_panel(app: &AppHandle) {
     if let Err(e) = panel.add_style_mask(NSWindowStyleMask::NonactivatingPanel) {
         log::error!("Could not make the island non-activating: {e}");
     }
-    // On every Space, other apps' full-screen ones included; it stays put when Spaces switch
-    // and out of the window cycle.
-    panel.set_collection_behavior(
-        NSWindowCollectionBehavior::CanJoinAllSpaces
-            | NSWindowCollectionBehavior::Stationary
-            | NSWindowCollectionBehavior::IgnoresCycle
-            | NSWindowCollectionBehavior::FullScreenAuxiliary,
-    );
+    panel.set_collection_behavior(island_spaces(CONFIG.read().unwrap().hide_in_fullscreen));
     panel.set_level(ISLAND_LEVEL);
     log::info!("The island is a non-activating panel, at window level {ISLAND_LEVEL}");
+}
+
+/// On every Space and out of the window cycle, staying put when Spaces switch. Full-screen
+/// apps' own Spaces are joined only when the island should show there: with "Hide during full
+/// screen" on, macOS itself keeps it out of them, so it never flashes up for the moment the
+/// watcher needs to notice the full-screen app.
+fn island_spaces(hide_in_fullscreen: bool) -> NSWindowCollectionBehavior {
+    let base = NSWindowCollectionBehavior::CanJoinAllSpaces
+        | NSWindowCollectionBehavior::Stationary
+        | NSWindowCollectionBehavior::IgnoresCycle;
+    if hide_in_fullscreen {
+        base
+    } else {
+        base | NSWindowCollectionBehavior::FullScreenAuxiliary
+    }
+}
+
+/// Re-applies the island's Spaces behaviour after the settings change.
+pub fn sync_full_screen_spaces(app: &AppHandle) {
+    let hide = CONFIG.read().unwrap().hide_in_fullscreen;
+    let app2 = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        if let Ok(panel) = app2.get_webview_panel("island") {
+            panel.set_collection_behavior(island_spaces(hide));
+        }
+    });
 }
 
 /// Shows the island in front without making it key or activating Ghars (a plain `show`
