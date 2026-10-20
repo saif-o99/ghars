@@ -28,59 +28,6 @@ impl Bounds {
             && self.x + self.w >= o.x + o.w - 1.0
             && self.y + self.h >= o.y + o.h - 1.0
     }
-
-    /// The same rectangle, give or take rounding to physical pixels and back.
-    fn matches(&self, o: &Bounds) -> bool {
-        (self.x - o.x).abs() <= 2.0
-            && (self.y - o.y).abs() <= 2.0
-            && (self.w - o.w).abs() <= 2.0
-            && (self.h - o.h).abs() <= 2.0
-    }
-}
-
-/// How far the menu bar and the Dock reach into a display, in points.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Insets {
-    pub top: f64,
-    pub left: f64,
-    pub right: f64,
-    pub bottom: f64,
-}
-
-/// An NSScreen: its frame and visible frame in AppKit coordinates (origin at the bottom-left
-/// of the main screen, y up), and whether it shows a menu bar.
-pub struct Screen {
-    pub frame: Bounds,
-    pub visible: Bounds,
-    pub has_menu_bar: bool,
-}
-
-/// The menu bar and Dock insets of the screen whose frame is `display`, given in the top-left,
-/// y-down coordinates CoreGraphics and tauri use. `screens[0]` is the main screen. A menu bar
-/// set to hide itself leaves no inset but still slides down over the top of the screen when the
-/// pointer gets there, so `menu_bar` points are kept clear for it anyway.
-pub fn insets(display: &Bounds, screens: &[Screen], menu_bar: f64) -> Option<Insets> {
-    let main_height = screens.first()?.frame.h;
-    screens.iter().find_map(|s| {
-        let (f, v) = (s.frame, s.visible);
-        let flipped = Bounds {
-            y: main_height - (f.y + f.h),
-            ..f
-        };
-        if !flipped.matches(display) {
-            return None;
-        }
-        let mut top = (f.y + f.h) - (v.y + v.h);
-        if s.has_menu_bar && top < 1.0 {
-            top = menu_bar;
-        }
-        Some(Insets {
-            top,
-            left: v.x - f.x,
-            right: (f.x + f.w) - (v.x + v.w),
-            bottom: v.y - f.y,
-        })
-    })
 }
 
 /// A window on screen, as CGWindowListCopyWindowInfo reports it (front to back), in points
@@ -128,70 +75,6 @@ mod tests {
             bounds,
             owner: format!("app {pid}"),
         }
-    }
-
-    /// A 1440x900 main screen with a 25 pt menu bar and a 70 pt Dock at the bottom, and a
-    /// 1920x1080 screen to its right, its top 100 pt above the main screen's, Dock-free.
-    fn screens() -> Vec<Screen> {
-        vec![
-            Screen {
-                frame: b(0.0, 0.0, 1440.0, 900.0),
-                visible: b(0.0, 70.0, 1440.0, 805.0),
-                has_menu_bar: true,
-            },
-            Screen {
-                frame: b(1440.0, -80.0, 1920.0, 1080.0),
-                visible: b(1440.0, -80.0, 1920.0, 1055.0),
-                has_menu_bar: true,
-            },
-        ]
-    }
-
-    #[test]
-    fn insets_of_the_main_screen() {
-        let i = insets(&b(0.0, 0.0, 1440.0, 900.0), &screens(), 24.0).unwrap();
-        assert_eq!(
-            i,
-            Insets {
-                top: 25.0,
-                left: 0.0,
-                right: 0.0,
-                bottom: 70.0
-            }
-        );
-    }
-
-    #[test]
-    fn insets_of_a_screen_beside_it() {
-        // AppKit's y = -80 with height 1080 puts its top at 1000, 100 pt above the main
-        // screen's top (900): -100 in top-left coordinates.
-        let i = insets(&b(1440.0, -100.0, 1920.0, 1080.0), &screens(), 24.0).unwrap();
-        assert_eq!(i.top, 25.0);
-        assert_eq!(i.bottom, 0.0);
-    }
-
-    #[test]
-    fn a_hidden_menu_bar_still_keeps_its_strip_clear() {
-        let mut s = screens();
-        s[0].visible = b(0.0, 70.0, 1440.0, 830.0);
-        assert_eq!(insets(&b(0.0, 0.0, 1440.0, 900.0), &s, 24.0).unwrap().top, 24.0);
-        s[0].has_menu_bar = false;
-        assert_eq!(insets(&b(0.0, 0.0, 1440.0, 900.0), &s, 24.0).unwrap().top, 0.0);
-    }
-
-    #[test]
-    fn dock_on_the_left() {
-        let mut s = screens();
-        s[0].visible = b(64.0, 0.0, 1376.0, 875.0);
-        let i = insets(&b(0.0, 0.0, 1440.0, 900.0), &s, 24.0).unwrap();
-        assert_eq!((i.left, i.right, i.bottom), (64.0, 0.0, 0.0));
-    }
-
-    #[test]
-    fn rounding_still_matches_but_another_display_does_not() {
-        assert!(insets(&b(0.5, 0.0, 1439.5, 900.5), &screens(), 24.0).is_some());
-        assert!(insets(&b(0.0, 0.0, 1280.0, 800.0), &screens(), 24.0).is_none());
-        assert!(insets(&b(0.0, 0.0, 1440.0, 900.0), &[], 24.0).is_none());
     }
 
     const DISPLAY: Bounds = Bounds {

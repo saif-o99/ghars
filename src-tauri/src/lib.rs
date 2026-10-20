@@ -178,18 +178,13 @@ fn edge_of(c: &Config) -> &'static str {
 
 /// The part of a display the island lives in: the whole screen for the notch style
 /// (it hugs the physical edge), otherwise the work area (clear of menu bar / taskbar).
-fn island_area(app: &AppHandle, monitor: &Monitor, notch: bool) -> (PhysicalPosition<i32>, tauri::PhysicalSize<u32>) {
+fn island_area(monitor: &Monitor, notch: bool) -> (PhysicalPosition<i32>, tauri::PhysicalSize<u32>) {
     if notch {
-        return (*monitor.position(), *monitor.size());
+        (*monitor.position(), *monitor.size())
+    } else {
+        let a = monitor.work_area();
+        (a.position, a.size)
     }
-    #[cfg(target_os = "macos")]
-    if let Some(area) = macos::work_area(app, monitor) {
-        return area;
-    }
-    #[cfg(not(target_os = "macos"))]
-    let _ = app;
-    let a = monitor.work_area();
-    (a.position, a.size)
 }
 
 /// Places the island window on the chosen display and edge. The window is centred on
@@ -205,7 +200,7 @@ pub fn position_island(app: &AppHandle) {
         (edge_of(&c), c.island_pos.clamp(0.0, 1.0), c.island_style == "notch")
     };
     let scale = monitor.scale_factor();
-    let (pos, size) = island_area(app, &monitor, notch);
+    let (pos, size) = island_area(&monitor, notch);
     let (ww, wh) = ((WIN_W * scale) as i32, (WIN_H * scale) as i32);
     let (left, top) = (pos.x, pos.y);
     let (right, bottom) = (left + size.width as i32, top + size.height as i32);
@@ -235,24 +230,9 @@ pub fn position_island(app: &AppHandle) {
             },
         )
     };
-    #[cfg(not(target_os = "macos"))]
-    {
-        let target = PhysicalPosition::new(x, y);
-        if win.outer_position().ok() != Some(target) {
-            let _ = win.set_position(target);
-        }
-    }
-    // macOS places windows in points. Physical pixels would be converted with the scale of the
-    // display the window is on now, not of the one it is going to.
-    #[cfg(target_os = "macos")]
-    {
-        let target = tauri::LogicalPosition::new(x as f64 / scale, y as f64 / scale);
-        let current = (win.outer_position().ok())
-            .zip(win.scale_factor().ok())
-            .map(|(p, s)| p.to_logical::<f64>(s));
-        if current.is_none_or(|c| (c.x - target.x).abs() > 0.5 || (c.y - target.y).abs() > 0.5) {
-            let _ = win.set_position(target);
-        }
+    let target = PhysicalPosition::new(x, y);
+    if win.outer_position().ok() != Some(target) {
+        let _ = win.set_position(target);
     }
     let state = app.state::<AppState>();
     let changed = {
@@ -517,7 +497,7 @@ struct Placement {
 fn drag_island(app: AppHandle) -> Option<Placement> {
     let (cursor, monitor) = cursor_and_monitor(&app)?;
     let notch = CONFIG.read().unwrap().island_style == "notch";
-    let (pos, size) = island_area(&app, &monitor, notch);
+    let (pos, size) = island_area(&monitor, notch);
     let (w, h) = (size.width as f64, size.height as f64);
     let (cx, cy) = (cursor.x - pos.x as f64, cursor.y - pos.y as f64);
     let sides = !cfg!(target_os = "linux");

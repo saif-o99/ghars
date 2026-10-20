@@ -1,20 +1,17 @@
-//! macOS: the island as a non-activating panel, the menu bar and the Dock, the cursor,
-//! full-screen detection, and the app menu.
+//! macOS: the island as a non-activating panel, the cursor, full-screen detection, and the
+//! app menu.
 
-use crate::macos_geometry::{self, Bounds, Insets, Screen, WindowInfo};
+use crate::macos_geometry::{self, Bounds, WindowInfo};
 use crate::{AppState, CONFIG, WIN_H, WIN_W, island};
 use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
-use objc2_app_kit::{
-    NSApplication, NSEvent, NSResponder, NSScreen, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask,
-};
-use objc2_foundation::{MainThreadMarker, NSArray, NSDictionary, NSNumber, NSRect, NSString, ns_string};
+use objc2_app_kit::{NSEvent, NSResponder, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask};
+use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSRect, NSString, ns_string};
 use std::ffi::c_void;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
-use std::time::Duration;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::{AppHandle, Manager, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow};
+use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_nspanel::{ManagerExt, WebviewWindowExt};
 
 // The macro also generates helpers Ghars doesn't use.
@@ -184,7 +181,7 @@ pub fn rebuild_app_menu(app: &AppHandle) {
     }
 }
 
-// ---------------------------------------------------------------- displays and cursor
+// ---------------------------------------------------------------- cursor and displays
 
 #[link(name = "CoreGraphics", kind = "framework")]
 unsafe extern "C" {
@@ -231,75 +228,6 @@ fn displays() -> Vec<Bounds> {
         .iter()
         .map(|&id| bounds(unsafe { CGDisplayBounds(id) }))
         .collect()
-}
-
-/// The part of `monitor` clear of the menu bar and the Dock, in its physical pixels. tauri's
-/// work area put the floating island under the menu bar on some Macs, so this reads the
-/// matching NSScreen itself (frame minus visible frame). A tauri Monitor doesn't say which
-/// NSScreen it is; they are matched by frame. AppKit wants the main thread; from elsewhere
-/// this waits for it.
-pub fn work_area(app: &AppHandle, monitor: &Monitor) -> Option<(PhysicalPosition<i32>, PhysicalSize<u32>)> {
-    let s = monitor.scale_factor();
-    let (p, size) = (monitor.position(), monitor.size());
-    let display = Bounds {
-        x: p.x as f64 / s,
-        y: p.y as f64 / s,
-        w: size.width as f64 / s,
-        h: size.height as f64 / s,
-    };
-    let insets = if let Some(mtm) = MainThreadMarker::new() {
-        insets_on_main(mtm, &display)
-    } else {
-        let (tx, rx) = std::sync::mpsc::channel();
-        app.run_on_main_thread(move || {
-            let _ = tx.send(MainThreadMarker::new().and_then(|mtm| insets_on_main(mtm, &display)));
-        })
-        .ok()?;
-        rx.recv_timeout(Duration::from_secs(1)).ok().flatten()
-    };
-    log_insets(&display, insets);
-    let i = insets?;
-    let px = |pt: f64| (pt * s).round() as i32;
-    let (w, h) = (size.width as i32, size.height as i32);
-    Some((
-        PhysicalPosition::new(p.x + px(i.left), p.y + px(i.top)),
-        PhysicalSize::new(
-            (w - px(i.left) - px(i.right)).max(1) as u32,
-            (h - px(i.top) - px(i.bottom)).max(1) as u32,
-        ),
-    ))
-}
-
-fn insets_on_main(mtm: MainThreadMarker, display: &Bounds) -> Option<Insets> {
-    // With separate Spaces (the default) every display has a menu bar, otherwise only the main one.
-    let separate = NSScreen::screensHaveSeparateSpaces(mtm);
-    let screens: Vec<Screen> = NSScreen::screens(mtm)
-        .iter()
-        .enumerate()
-        .map(|(i, s)| Screen {
-            frame: bounds(s.frame()),
-            visible: bounds(s.visibleFrame()),
-            has_menu_bar: i == 0 || separate,
-        })
-        .collect();
-    let menu_bar = NSApplication::sharedApplication(mtm)
-        .mainMenu()
-        .map_or(0.0, |m| m.menuBarHeight());
-    macos_geometry::insets(display, &screens, if menu_bar > 0.0 { menu_bar } else { 24.0 })
-}
-
-/// Logs the insets used for a display when they change, so a log shows where the island went.
-fn log_insets(display: &Bounds, insets: Option<Insets>) {
-    static LAST: Mutex<Option<String>> = Mutex::new(None);
-    let now = format!("{display:?}: {insets:?}");
-    let mut last = LAST.lock().unwrap();
-    if last.as_deref() != Some(now.as_str()) {
-        match insets {
-            Some(i) => log::info!("Menu bar and Dock insets on display {display:?}: {i:?}"),
-            None => log::warn!("No screen matches display {display:?}; using tauri's work area"),
-        }
-        *last = Some(now);
-    }
 }
 
 // ---------------------------------------------------------------- full screen
