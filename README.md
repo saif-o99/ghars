@@ -17,7 +17,7 @@ on `127.0.0.1:47821`, so your AI tools can tell Ghars when they're working.
 ## Features
 
 - **The island** — sits at the top of the screen and expands on hover. Clicks pass through everywhere
-  except the island itself, and it hides during full-screen apps and presentations.
+  except the island itself, and it can hide during full-screen apps and presentations (off by default).
   - Two styles: **floating**, or a **notch** attached to the top edge of the screen.
   - Three sizes. Drag it anywhere along the top or the left / right side of the screen (or pick a
     preset), on the main screen, a chosen screen, or whichever screen the mouse pointer is on.

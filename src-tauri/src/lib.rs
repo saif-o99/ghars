@@ -52,7 +52,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            hide_in_fullscreen: true,
+            hide_in_fullscreen: false,
             hotkey: String::new(),
             ui_lang: "ar".into(),
             island_edge: "top".into(),
