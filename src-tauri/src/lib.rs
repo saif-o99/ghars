@@ -79,8 +79,12 @@ impl Default for Anchor {
 
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 pub struct Rect {
+    // Linux only resizes the window to the island's height; the hit test that reads x and w
+    // doesn't exist there.
+    #[cfg_attr(target_os = "linux", allow(dead_code))]
     x: f64,
     y: f64,
+    #[cfg_attr(target_os = "linux", allow(dead_code))]
     w: f64,
     h: f64,
 }

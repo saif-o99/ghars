@@ -73,4 +73,10 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: cargo-audit
-      - run: cargo audit --file src-tauri/Cargo.lock
+      # zip 4.x (RUSTSEC-2026-0367/0368/0369, fixed only in zip 9) comes from tauri-plugin-updater 2.14,
+      # the latest stable. It is built on Windows only and unpacks update archives only after their
+      # signature has been verified; the advisories concern Unix permissions and symlinks. Drop these
+      # ignores once the updater moves to zip >= 9.
+      - run: >-
+          cargo audit --file src-tauri/Cargo.lock
+          --ignore RUSTSEC-2026-0367 --ignore RUSTSEC-2026-0368 --ignore RUSTSEC-2026-0369
