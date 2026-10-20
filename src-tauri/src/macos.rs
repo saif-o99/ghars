@@ -78,7 +78,7 @@ fn island_spaces(hide_in_fullscreen: bool) -> NSWindowCollectionBehavior {
 }
 
 /// The "Hide during full screen" value the island's Spaces behaviour was last set for.
-static SPACES_HIDE: AtomicBool = AtomicBool::new(true);
+static SPACES_HIDE: AtomicBool = AtomicBool::new(false);
 
 /// Re-applies the island's Spaces behaviour when "Hide during full screen" changes. macOS
 /// only re-evaluates which Spaces a window on screen belongs to when it is ordered out and in

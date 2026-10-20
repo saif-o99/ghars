@@ -105,7 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   istighfarGoal: 100,
   packMode: "auto",
   autoOpen: "compact",
-  hideInFullscreen: true,
+  hideInFullscreen: false,
   islandOverMenuBar: false,
   hotkey: DEFAULT_HOTKEY,
   quiet: { enabled: false, from: "22:00", to: "06:00" },
