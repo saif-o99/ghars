@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::time::Duration;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::{AppHandle, Manager, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow};
-use tauri_nspanel::{ManagerExt, Panel, WebviewWindowExt};
+use tauri_nspanel::{ManagerExt, WebviewWindowExt};
 
 // The macro also generates helpers Ghars doesn't use.
 #[allow(dead_code)]
