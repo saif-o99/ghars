@@ -247,11 +247,16 @@ fn set_island_level(app: &AppHandle) {
     let notch = CONFIG.read().unwrap().island_style == "notch";
     // NSMainMenuWindowLevel + 1, or the level tao uses for always-on-top.
     let level: isize = if notch { 25 } else { 5 };
+    // On every Space, including full-screen apps' own Spaces (FullScreenAuxiliary); it stays
+    // put when Spaces switch and stays out of the window cycle:
+    // CanJoinAllSpaces | Stationary | IgnoresCycle | FullScreenAuxiliary.
+    let behavior: usize = (1 << 0) | (1 << 4) | (1 << 6) | (1 << 8);
     let Ok(ns_window) = win.ns_window() else { return };
     let ns_window = ns_window as usize;
     let _ = win.run_on_main_thread(move || unsafe {
         let ns_window = ns_window as *mut objc2::runtime::AnyObject;
         let _: () = objc2::msg_send![ns_window, setLevel: level];
+        let _: () = objc2::msg_send![ns_window, setCollectionBehavior: behavior];
     });
 }
 
@@ -381,6 +386,10 @@ fn hit_test(app: &AppHandle, ignoring: &mut Option<bool>) -> Duration {
     {
         *ignoring = Some(!inside);
         let _ = win.set_ignore_cursor_events(!inside);
+        // WebKit only reports mouse enter/leave to the page while its app is active, which a
+        // menu-bar app usually isn't, so the island learns about hover from here instead.
+        #[cfg(target_os = "macos")]
+        let _ = app.emit_to("island", "island-hover", inside);
     }
     let dx = (rect.x - cx).max(cx - (rect.x + rect.w)).max(0.0);
     let dy = (rect.y - cy).max(cy - (rect.y + rect.h)).max(0.0);

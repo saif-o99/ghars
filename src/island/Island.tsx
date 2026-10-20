@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { ISTIGHFAR, PACK_ORDER, packFor, type Dhikr, type PackId } from "../shared/content";
 import { fmt, isRtl, locale, meaning } from "../i18n";
 import { openSettings, setHitRect, setIslandOpen } from "../shared/ipc";
@@ -146,6 +147,8 @@ export function Island() {
   function onEnter() {
     if (drag.current?.active) return;
     window.clearTimeout(timers.current.leave);
+    // Both the page and (on macOS) the backend report hover; one pending open is enough.
+    window.clearTimeout(timers.current.enter);
     if (view !== "expanded") {
       timers.current.enter = window.setTimeout(() => setView("expanded"), view === "collapsed" ? 160 : 60);
     }
@@ -156,6 +159,24 @@ export function Island() {
     setSetMenu(false);
     if (view === "expanded") timers.current.leave = window.setTimeout(() => setView("collapsed"), 380);
   }
+
+  // On macOS the backend reports hover (see `hit_test`): WebKit sends no mouse enter/leave
+  // to a page whose app isn't active, which a menu-bar app usually isn't.
+  const hover = useRef({ onEnter, onLeave });
+  useLayoutEffect(() => {
+    hover.current = { onEnter, onLeave };
+  });
+  useEffect(() => {
+    let cancelled = false;
+    let un: (() => void) | undefined;
+    listen<boolean>("island-hover", (e) => (e.payload ? hover.current.onEnter() : hover.current.onLeave()))
+      .then((u) => (cancelled ? u() : (un = u)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      un?.();
+    };
+  }, []);
 
   // ---------------------------------------------------------------- render
   if (!settings) return null;
