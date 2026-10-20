@@ -44,6 +44,9 @@ pub struct Config {
     pub island_style: String,
     /// Check GitHub Releases for a new version once a day.
     pub check_updates: bool,
+    /// macOS: the floating island on the top edge sits at the very top of the screen, over
+    /// the menu bar, instead of below it.
+    pub island_over_menu_bar: bool,
 }
 
 impl Default for Config {
@@ -57,6 +60,7 @@ impl Default for Config {
             island_monitor: "primary".into(),
             island_style: "floating".into(),
             check_updates: true,
+            island_over_menu_bar: false,
         }
     }
 }
@@ -195,12 +199,20 @@ pub fn position_island(app: &AppHandle) {
     let Some(monitor) = target_monitor(app, &win) else {
         return;
     };
-    let (edge, frac, notch) = {
+    let (edge, frac, notch, over_menu_bar) = {
         let c = CONFIG.read().unwrap();
-        (edge_of(&c), c.island_pos.clamp(0.0, 1.0), c.island_style == "notch")
+        let edge = edge_of(&c);
+        let over_menu_bar = cfg!(target_os = "macos") && c.island_over_menu_bar && edge == "top";
+        (
+            edge,
+            c.island_pos.clamp(0.0, 1.0),
+            c.island_style == "notch",
+            over_menu_bar,
+        )
     };
     let scale = monitor.scale_factor();
-    let (pos, size) = island_area(&monitor, notch);
+    // Over the menu bar, the floating island measures from the screen's top edge like the notch.
+    let (pos, size) = island_area(&monitor, notch || over_menu_bar);
     let (ww, wh) = ((WIN_W * scale) as i32, (WIN_H * scale) as i32);
     let (left, top) = (pos.x, pos.y);
     let (right, bottom) = (left + size.width as i32, top + size.height as i32);
@@ -457,6 +469,8 @@ fn apply_config(app: AppHandle, state: tauri::State<AppState>, config: Config) -
         macos::rebuild_app_menu(&app);
     }
     position_island(&app);
+    #[cfg(target_os = "macos")]
+    macos::sync_full_screen_spaces(&app);
     // Compared with the shortcut that actually registered rather than the previous
     // config, so one that failed (another app held it) is tried again next time.
     let mut registered = state.hotkey.lock().unwrap();

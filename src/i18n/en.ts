@@ -79,6 +79,8 @@ export const en = {
     positionHelp: "You can also drag the island to any spot along the top or the sides of the screen.",
     slim: "Slim when idle",
     slimHelp: "When you're not using it, the island shrinks to a thin bar at the screen edge. Hover the bar to open it.",
+    overMenuBar: "Over the menu bar",
+    overMenuBarHelp: "At the very top of the screen, like on Windows. It may cover long app menus.",
     screen: "Screen",
     screenPrimary: "Main screen",
     screenCursor: "Wherever the mouse is",

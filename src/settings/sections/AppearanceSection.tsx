@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fmt } from "../../i18n";
 import { listMonitors, type MonitorInfo } from "../../shared/ipc";
+import { IS_MAC } from "../../shared/settings";
 import { Group } from "../components/Group";
 import { Row } from "../components/Row";
 import { Seg } from "../components/Seg";
@@ -71,6 +72,11 @@ export function AppearanceSection({ s, L, l, update }: SectionProps) {
             onChange={(v) => update({ islandPos: v })}
           /></div>
         </Row>
+        {IS_MAC && s.islandStyle === "floating" && s.islandEdge === "top" && (
+          <Row label={l.overMenuBar} help={l.overMenuBarHelp}>
+            <Toggle label={l.overMenuBar} on={s.islandOverMenuBar} onChange={(v) => update({ islandOverMenuBar: v })} />
+          </Row>
+        )}
         <Row label={l.slim} help={l.slimHelp}>
           <Toggle label={l.slim} on={s.islandSlim} onChange={(v) => update({ islandSlim: v })} />
         </Row>

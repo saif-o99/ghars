@@ -48,6 +48,7 @@ export function applyConfig(s: Settings) {
   return invoke("apply_config", {
     config: {
       hideInFullscreen: s.hideInFullscreen,
+      islandOverMenuBar: s.islandOverMenuBar,
       hotkey: s.hotkey,
       uiLang: s.uiLang,
       islandEdge: s.islandEdge,

@@ -78,6 +78,8 @@ export const fr: PartialLocale = {
     positionHelp: "Vous pouvez aussi faire glisser l’îlot n’importe où le long du bord supérieur ou des côtés de l’écran.",
     slim: "Barre fine au repos",
     slimHelp: "Quand vous ne l’utilisez pas, l’îlot se réduit à une fine barre au bord de l’écran. Survolez-la pour l’ouvrir.",
+    overMenuBar: "Par-dessus la barre des menus",
+    overMenuBarHelp: "Tout en haut de l'écran, comme sous Windows. Peut masquer les longs menus d'application.",
     screen: "Écran",
     screenPrimary: "Écran principal",
     screenCursor: "Suivre le pointeur",
