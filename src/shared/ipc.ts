@@ -61,12 +61,12 @@ export function applyConfig(s: Settings) {
 }
 
 export const setHitRect = (rect: HitRect) => invoke("set_hit_rect", { rect });
-export const openSettings = () => invoke("open_settings");
+/** Opens the settings window, on `section` if given. */
+export const openSettings = (section?: string) => invoke("open_settings", { section });
 /** Whether the system started Ghars at login. */
 export const autostarted = () => invoke<boolean>("autostarted");
 export const setTrayTooltip = (text: string) => invoke("set_tray_tooltip", { text });
 export const focusIsland = () => invoke("focus_island");
-export const simulateAgent = (kind: "busy" | "idle" | "attention") => invoke("simulate_agent", { kind });
 export const integrations = () => invoke<IntegrationStatus[]>("integrations_status");
 export const installIntegration = (id: string) => invoke<IntegrationStatus>("integration_install", { id });
 export const uninstallIntegration = (id: string) => invoke<IntegrationStatus>("integration_uninstall", { id });

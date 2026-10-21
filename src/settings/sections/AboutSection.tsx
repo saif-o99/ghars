@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { fmt, type Lang } from "../../i18n";
 import { checkUpdate, installUpdate, pendingUpdate, type UpdateInfo, type UpdateProgress } from "../../shared/ipc";
 import { Group } from "../components/Group";
@@ -7,6 +8,26 @@ import { Row } from "../components/Row";
 import { Toggle } from "../components/Toggle";
 import { withDetail } from "../errors";
 import type { SectionProps } from "../types";
+
+// The settings capability lets the opener plugin open only these two.
+const AUTHOR_URL = "https://github.com/saif-o99";
+const ISSUES_URL = "https://github.com/saif-o99/ghars/issues";
+
+/** A web link that opens in the default browser rather than in the settings window. */
+function Link({ url }: { url: string }) {
+  return (
+    <a
+      href={url}
+      dir="ltr"
+      onClick={(e) => {
+        e.preventDefault();
+        openUrl(url).catch(console.error);
+      }}
+    >
+      {url.replace("https://", "")}
+    </a>
+  );
+}
 
 /** The release date of an update in the interface language, if the backend sent a readable one. */
 function releaseDate(date: string | null | undefined, lang: Lang): string {
@@ -137,6 +158,12 @@ export function AboutSection({ s, l, update }: SectionProps) {
           <p>{l.sources}</p>
           <p>{l.translationsNote}</p>
           <p>{l.openSource}</p>
+          <p>
+            {fmt(l.madeBy, { name: "Saif Abu eideh" })} · <Link url={AUTHOR_URL} />
+          </p>
+          <p>
+            {l.reportIssue} <Link url={ISSUES_URL} />
+          </p>
         </div>
       </Group>
     </>

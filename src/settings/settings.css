@@ -295,6 +295,12 @@ nav button.active {
 nav button.active .ico {
   color: var(--s-accent);
 }
+/* After About while an update waits. */
+nav .nav-update {
+  display: flex;
+  margin-inline-start: auto;
+  color: var(--s-accent);
+}
 .lang {
   margin-top: auto;
   display: flex;
@@ -743,6 +749,14 @@ h2 {
 }
 .about p:last-child {
   margin: 0;
+}
+.about a {
+  color: var(--s-accent);
+  text-decoration: none;
+  unicode-bidi: isolate;
+}
+.about a:hover {
+  text-decoration: underline;
 }
 .version {
   font-variant-numeric: tabular-nums;

@@ -68,7 +68,7 @@ pub fn installing() -> bool {
 }
 
 /// Asks the endpoint for a newer version. A new find is stored, announced with
-/// `update-available` and added to the tray menu.
+/// `update-available` and added to the tray menu and tooltip.
 pub async fn check(app: &AppHandle) -> Result<Option<UpdateInfo>, String> {
     let found = app
         .updater()
@@ -88,6 +88,7 @@ pub async fn check(app: &AppHandle) -> Result<Option<UpdateInfo>, String> {
         log::info!("Update available: {}", info.version);
         let _ = app.emit("update-available", info.clone());
         crate::rebuild_tray_menu(app);
+        crate::refresh_tray_tooltip(app);
     }
     Ok(Some(info))
 }
