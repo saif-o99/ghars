@@ -7,7 +7,7 @@
   مجانية، وتعمل دون إنترنت، ولا تجمع شيئاً من بياناتك.
 </p>
 <p align="center">
-  <a href="https://github.com/saif-o99/ghars/releases/latest"><b>⬇ نزّل غرس لويندوز وماك ولينكس</b></a>
+  <a href="https://github.com/saif-o99/ghars/releases/latest"><b>⬇ حمّل غرس لويندوز وماك ولينكس</b></a>
 </p>
 
 <p align="center"><img src="docs/images/hero.png" width="800" alt="جزيرة غرس مفتوحة أسفل الحافة العليا للشاشة، وعدّاد الاستغفار عند 33 من 100"></p>
@@ -62,11 +62,11 @@
 
 ## طريقة التثبيت
 
-**ويندوز:** نزّل الملف المنتهي بـ `-setup.exe` ثم شغّله.
+**ويندوز:** حمّل الملف المنتهي بـ `-setup.exe` ثم شغّله.
 وإن ظهرت لك رسالة «Windows protected your PC» فاختر **More info** ثم **Run anyway**؛
 وسبب ظهورها أن التطبيق لم يُوقَّع لويندوز بعد.
 
-**ماك:** نزّل ملف `.dmg` المناسب لجهازك: `aarch64` لأجهزة Apple silicon (‏M1 وما بعده)،
+**ماك:** حمّل ملف `.dmg` المناسب لجهازك: `aarch64` لأجهزة Apple silicon (‏M1 وما بعده)،
 و`x64` لأجهزة Intel، ثم اسحب غرس إلى مجلد Applications. والتطبيق موقَّع ومعتمد من Apple.
 
 **لينكس:** اختر `.AppImage` أو `.deb` أو `.rpm`.
