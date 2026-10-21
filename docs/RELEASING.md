@@ -29,17 +29,17 @@ signature matches the public key in `src-tauri/tauri.conf.json` (`plugins.update
 
 ### 1. The signing key
 
-The key pair was generated with
+Generate a key pair once, in a folder outside the project, and give it a password when asked:
 
 ```sh
-pnpm tauri signer generate --ci -w "%USERPROFILE%\.tauri\ghars-updater.key"
+pnpm tauri signer generate -w <path outside the repo>/ghars-updater.key
 ```
 
-- private key: `%USERPROFILE%\.tauri\ghars-updater.key` (no password). Never put it in the
-  repository, and back it up somewhere safe: **if it's lost, installed copies of Ghars can
-  never be updated again**, because they only trust updates signed with it.
-- public key: `%USERPROFILE%\.tauri\ghars-updater.key.pub`, already copied into
-  `tauri.conf.json`. If you ever generate a new pair, replace `pubkey` there too.
+- private key: `ghars-updater.key`. Never put it in the repository, and back it up somewhere
+  safe: **if it's lost, installed copies of Ghars can never be updated again**, because they
+  only trust updates signed with it.
+- public key: `ghars-updater.key.pub`. Its contents go in `plugins.updater.pubkey` in
+  `tauri.conf.json`; replace it there whenever you generate a new pair.
 
 ### 2. Add two GitHub secrets
 
@@ -48,7 +48,7 @@ Repository → *Settings* → *Secrets and variables* → *Actions* → **New re
 | Secret | Value |
 |---|---|
 | `TAURI_SIGNING_PRIVATE_KEY` | The whole contents of `ghars-updater.key` (one line of text) |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The key's password. The current key has none, and GitHub doesn't store empty secrets, so skip this one until you use a key with a password |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The key's password. If the key has none, skip this one (GitHub doesn't store empty secrets) |
 
 The workflow stops before building if `TAURI_SIGNING_PRIVATE_KEY` is missing, and gives the
 two secrets only to the build steps.
@@ -77,8 +77,8 @@ jobs have finished.
 and fails without the key. Set it for the shell first (PowerShell):
 
 ```powershell
-$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content "$env:USERPROFILE\.tauri\ghars-updater.key" -Raw
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content "<path to>\ghars-updater.key" -Raw
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "<the key's password, or empty if it has none>"
 pnpm tauri build
 ```
 
@@ -100,7 +100,7 @@ cannot be verified"). It needs an Apple Developer account.
 
 ```sh
 openssl genrsa -out ghars.key 2048
-openssl req -new -key ghars.key -out ghars.csr -subj "/emailAddress=you@example.com/CN=Your Name/C=JO"
+openssl req -new -key ghars.key -out ghars.csr -subj "/emailAddress=you@example.com/CN=Your Name/C=XX"
 ```
 
 On [developer.apple.com → Certificates](https://developer.apple.com/account/resources/certificates/list)
