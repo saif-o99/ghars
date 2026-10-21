@@ -172,6 +172,9 @@ jobs:
     name: Check the updater manifest
     needs: [release, build]
     runs-on: ubuntu-latest
+    # A draft release is only visible to a token that can write to the repository.
+    permissions:
+      contents: write
     steps:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
