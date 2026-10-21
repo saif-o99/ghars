@@ -62,6 +62,8 @@ export function applyConfig(s: Settings) {
 
 export const setHitRect = (rect: HitRect) => invoke("set_hit_rect", { rect });
 export const openSettings = () => invoke("open_settings");
+/** Whether the system started Ghars at login. */
+export const autostarted = () => invoke<boolean>("autostarted");
 export const setTrayTooltip = (text: string) => invoke("set_tray_tooltip", { text });
 export const focusIsland = () => invoke("focus_island");
 export const simulateAgent = (kind: "busy" | "idle" | "attention") => invoke("simulate_agent", { kind });

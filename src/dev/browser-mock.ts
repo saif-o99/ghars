@@ -93,6 +93,7 @@ mockIPC(
       case "install_skill":
         return ["~/.claude/skills/ghars-setup/SKILL.md", "~/.agents/skills/ghars-setup/SKILL.md"];
       case "plugin:autostart|is_enabled":
+      case "autostarted":
         return false;
       case "server_port":
         return 47821;

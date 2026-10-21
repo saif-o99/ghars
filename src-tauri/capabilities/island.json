@@ -13,6 +13,7 @@
     "allow-set-quiet",
     "allow-set-island-open",
     "allow-open-settings",
+    "allow-autostarted",
     "allow-focus-island",
     "allow-release-island-focus",
     "allow-set-tray-tooltip"
