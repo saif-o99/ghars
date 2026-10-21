@@ -86,6 +86,18 @@ New versions install themselves when you choose to update from the tray menu.
 
 **Is it free?** Yes, and it always will be. It's open source under the MIT license.
 
+**Do I need AI tools to use it?** No. Ghars works on its own. Opening while your AI agent works
+is an extra you can turn on if you use one.
+
+**Does it work without internet?** Yes. Everything works offline, including prayer times.
+Only the daily check for a new version needs a connection.
+
+**I don't read Arabic well. Is it for me?** Yes. Every dhikr shows its meaning in your language,
+and you can listen to how it's pronounced.
+
+**How do I keep my counts when I change computers?** In **Settings → Stats**, click
+**Export backup**. On the new computer, open the same page and click **Restore backup**.
+
 **Where do the texts come from?** From *Hisn al-Muslim*, with the reference shown for each dhikr.
 The pronunciation audio is computer-generated and is being reviewed by native Arabic speakers.
 
