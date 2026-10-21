@@ -4,7 +4,7 @@ export const ar: PartialLocale = {
   island: {
     istighfar: "استغفار",
     adhkar: "أذكار",
-    slowDown: "تمهّل… واذكر بقلبك ولسانك",
+    slowDown: "تمهّل… ليواطئ القلبُ اللسان",
     next: "التالي",
     prev: "السابق",
     settings: "الإعدادات",
