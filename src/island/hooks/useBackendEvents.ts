@@ -1,7 +1,7 @@
 import { useEffect, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { applyConfig, focusIsland, openSettings, type AgentEvent } from "../../shared/ipc";
+import { applyConfig, autostarted, focusIsland, openSettings, type AgentEvent } from "../../shared/ipc";
 import { nextPrayer } from "../../shared/prayer";
 import { loadSettings, onSettingsChanged, type Settings } from "../../shared/settings";
 import { loadStats, onStatsChanged } from "../../shared/stats";
@@ -46,7 +46,8 @@ export function useBackendEvents({ settingsRef, viewRef, setSettings, setRev, se
         setSettings(s);
         applyConfig(s).catch(console.error);
         invoke<Anchor>("island_anchor").then(setAnchor).catch(() => {});
-        if (!s.onboarded) openSettings().catch(console.error);
+        // The welcome window opens on a first launch, not when the system starts Ghars at login.
+        if (!s.onboarded && !(await autostarted().catch(() => false))) openSettings().catch(console.error);
       } catch (e) {
         console.error("Couldn't load settings", e);
       }

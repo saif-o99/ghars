@@ -16,6 +16,7 @@ fn main() {
             "import_backup",
             "simulate_agent",
             "open_settings",
+            "autostarted",
             "focus_island",
             "release_island_focus",
             "set_tray_tooltip",

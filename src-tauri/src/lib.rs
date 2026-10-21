@@ -27,6 +27,13 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 const WIN_W: f64 = 600.0;
 const WIN_H: f64 = 520.0;
 
+/// Passed by the login item, so a launch at login can be told apart from the user opening Ghars.
+const AUTOSTART_ARG: &str = "--autostart";
+
+fn launched_at_login() -> bool {
+    std::env::args().any(|a| a == AUTOSTART_ARG)
+}
+
 /// Missing fields take their defaults, so a partial payload still applies.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -653,6 +660,12 @@ fn open_settings(app: AppHandle) {
     show_settings(&app);
 }
 
+/// Whether the system started Ghars at login (the island skips the welcome window then).
+#[tauri::command]
+fn autostarted() -> bool {
+    launched_at_login()
+}
+
 #[tauri::command]
 fn focus_island(app: AppHandle) {
     // On macOS the island is a panel: `set_focus` would activate Ghars, and tao's
@@ -1052,11 +1065,32 @@ pub fn end_expired_pause(app: &AppHandle) {
     let _ = app.emit("pause-changed", false);
 }
 
+/// Rewrites an existing login item so it starts this copy of Ghars with `AUTOSTART_ARG`.
+/// Items from older versions lack the flag, and one left by another build (an old copy, or
+/// one with a different identifier) would start that instead. Not in dev builds, which would
+/// take the login item over.
+fn refresh_login_item(app: &AppHandle) {
+    use tauri_plugin_autostart::ManagerExt;
+    if cfg!(debug_assertions) {
+        return;
+    }
+    let launcher = app.autolaunch();
+    if launcher.is_enabled().unwrap_or(false)
+        && let Err(e) = launcher.enable()
+    {
+        log::warn!("Could not update the login item: {e}");
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_settings(app)
+        // Opening Ghars again shows the settings. A second launch at login doesn't: macOS also
+        // reopens the apps of the last session, so Ghars can be started twice there.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if !args.iter().any(|a| a == AUTOSTART_ARG) {
+                show_settings(app)
+            }
         }))
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -1074,7 +1108,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
+            Some(vec![AUTOSTART_ARG]),
         ))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -1106,6 +1140,7 @@ pub fn run() {
             import_backup,
             simulate_agent,
             open_settings,
+            autostarted,
             focus_island,
             release_island_focus,
             set_tray_tooltip,
@@ -1147,6 +1182,7 @@ pub fn run() {
                     *state.island_geom.lock().unwrap() = Some((pos, scale));
                 }
             }
+            refresh_login_item(&handle);
             server::start(handle.clone());
             // Rewrites outdated Ghars hooks in the AI tools' configs; file I/O, so off the
             // main thread.
