@@ -31,7 +31,7 @@ export const ms: PartialLocale = {
       welcome: "Sediakan Ghars dalam beberapa langkah mudah.",
       appearance: "Sesuaikan rupa dan kedudukan pulau.",
       counting: "Pilih lafaz istighfar, tetapkan sasaran harian dan tambah zikir sendiri.",
-      ai: "Pulau terbuka apabila ejen AI mula bekerja. Tiada data dihantar keluar dari komputer anda.",
+      ai: "Pulau terbuka apabila ejen AI mula bekerja.",
       prayer: "Waktu solat dikira pada peranti anda tanpa internet.",
       behavior: "Tetapan permulaan, pintasan, jeda dan waktu senyap.",
       stats: "Rekod kiraan anda disimpan pada peranti ini sahaja.",

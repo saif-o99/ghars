@@ -58,7 +58,7 @@ export function Island() {
   const { dragging, drag, onPointerDown, onPointerMove, endDrag } = useIslandDrag({ view, setView, setSetMenu, timers });
 
   // ---------------------------------------------------------------- data
-  const lang = settings?.uiLang ?? "ar";
+  const lang = settings?.uiLang ?? "en";
   const L = locale(lang);
   const t = L.island;
   const custom = settings?.customAdhkar ?? [];

@@ -31,7 +31,7 @@ export const id: PartialLocale = {
       welcome: "Siapkan Ghars dalam beberapa langkah.",
       appearance: "Atur tampilan dan posisi panel di layar.",
       counting: "Pilih bacaan istigfar, atur target harian, dan tambahkan zikir sendiri.",
-      ai: "Panel terbuka saat asisten AI mulai bekerja. Semua data tetap di komputer Anda.",
+      ai: "Panel terbuka saat asisten AI mulai bekerja.",
       prayer: "Waktu salat dihitung langsung di perangkat, tanpa internet.",
       behavior: "Atur mulai otomatis, pintasan, jeda, dan jam tenang.",
       stats: "Catatan zikir hanya tersimpan di perangkat ini.",

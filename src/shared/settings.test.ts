@@ -167,4 +167,10 @@ describe("default hotkey", () => {
     expect(mac.DEFAULT_HOTKEY).toBe("CommandOrControl+Alt+G");
     expect(mac.DEFAULT_SETTINGS.hotkey).toBe("CommandOrControl+Alt+G");
   });
+
+  it("moves the early builds' saved Ctrl+Alt+G to Alt+Shift+G off macOS", async () => {
+    expect((await (await setup({ hotkey: "CommandOrControl+Alt+G" }, "Win32")).loadSettings()).hotkey).toBe("Alt+Shift+G");
+    expect((await (await setup({ hotkey: "CommandOrControl+Alt+G" }, "MacIntel")).loadSettings()).hotkey).toBe("CommandOrControl+Alt+G");
+    expect((await (await setup({ hotkey: "Ctrl+Shift+K" }, "Win32")).loadSettings()).hotkey).toBe("Ctrl+Shift+K");
+  });
 });

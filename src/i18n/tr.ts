@@ -31,7 +31,7 @@ export const tr: PartialLocale = {
       welcome: "Birkaç adımda kullanmaya başlayın.",
       appearance: "Adanın görünümünü ve ekrandaki yerini ayarlayın.",
       counting: "İstiğfarınızı seçin, günlük hedefinizi belirleyin, kendi zikirlerinizi ekleyin.",
-      ai: "Yapay zekâ asistanınız çalışmaya başlayınca ada açılır. Verileriniz bilgisayarınızda kalır.",
+      ai: "Yapay zekâ asistanınız çalışmaya başlayınca ada açılır.",
       prayer: "Vakitler internet bağlantısı olmadan cihazınızda hesaplanır.",
       behavior: "Açılış, kısayol, duraklatma ve sessiz saatler.",
       stats: "Zikir sayılarınız yalnızca bu cihazda saklanır.",
