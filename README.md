@@ -1,3 +1,4 @@
+<p align="center"><b>English</b> · <a href="README.ar.md">العربية</a></p>
 <p align="center"><img src="docs/images/icon.png" width="96" alt=""></p>
 <h1 align="center">غرس · Ghars</h1>
 <p align="center">
