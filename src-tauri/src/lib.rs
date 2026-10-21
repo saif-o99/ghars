@@ -116,6 +116,8 @@ pub struct AppState {
     /// Paused from the tray or settings.
     pause: Mutex<Pause>,
     tray: Mutex<Option<TrayIcon>>,
+    /// The tray tooltip the island last sent (today's count), without the update line.
+    tray_tooltip: Mutex<Option<String>>,
     anchor: Mutex<Anchor>,
     /// The island window's position and scale factor, kept up to date from window events
     /// so the hit-testing loop never has to ask the event loop for them.
@@ -472,6 +474,7 @@ fn apply_config(app: AppHandle, state: tauri::State<AppState>, config: Config) -
     *CONFIG.write().unwrap() = config;
     if lang_changed {
         rebuild_tray_menu(&app);
+        refresh_tray_tooltip(&app);
         #[cfg(target_os = "macos")]
         macos::rebuild_app_menu(&app);
     }
@@ -648,16 +651,10 @@ async fn import_backup(window: WebviewWindow) -> Result<Option<String>, String> 
     .map_err(|e| e.to_string())?
 }
 
+/// Opens the settings, on `section` if given (the island opens About for an update).
 #[tauri::command]
-fn simulate_agent(app: AppHandle, kind: String) -> Result<(), String> {
-    let kind = tracker::Kind::parse(&kind).ok_or("unknown kind")?;
-    server::record(&app, "test", "simulated", kind);
-    Ok(())
-}
-
-#[tauri::command]
-fn open_settings(app: AppHandle) {
-    show_settings(&app);
+fn open_settings(app: AppHandle, section: Option<String>) {
+    show_settings(&app, section.as_deref());
 }
 
 /// Whether the system started Ghars at login (the island skips the welcome window then).
@@ -690,7 +687,24 @@ fn release_island_focus(app: AppHandle) {
 }
 
 #[tauri::command]
-fn set_tray_tooltip(state: tauri::State<AppState>, text: String) {
+fn set_tray_tooltip(app: AppHandle, text: String) {
+    *app.state::<AppState>().tray_tooltip.lock().unwrap() = Some(text);
+    refresh_tray_tooltip(&app);
+}
+
+/// The island's tooltip text (or just "Ghars"), plus a line while an update waits.
+pub fn refresh_tray_tooltip(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let t = labels();
+    let mut text = state
+        .tray_tooltip
+        .lock()
+        .unwrap()
+        .clone()
+        .unwrap_or_else(|| t.ghars.into());
+    if let Some(version) = updates::pending_version() {
+        text = format!("{text}\n{}", t.available.replace("{version}", &version));
+    }
     if let Some(tray) = state.tray.lock().unwrap().as_ref() {
         let _ = tray.set_tooltip(Some(text));
     }
@@ -750,10 +764,15 @@ async fn install_update(app: AppHandle) -> Result<(), String> {
 
 // ---------------------------------------------------------------- windows & tray
 
-fn show_settings(app: &AppHandle) {
+fn show_settings(app: &AppHandle, section: Option<&str>) {
     /// Set while the window is being built, so two quick clicks don't build it twice.
     static OPENING: AtomicBool = AtomicBool::new(false);
+    // Goes in the page's URL, so only a plain section name.
+    let section = section.filter(|s| !s.is_empty() && s.chars().all(|c| c.is_ascii_lowercase()));
     if let Some(win) = app.get_webview_window("settings") {
+        if let Some(section) = section {
+            let _ = app.emit_to("settings", "settings-section", section);
+        }
         let _ = win.unminimize();
         let _ = win.show();
         let _ = win.set_focus();
@@ -774,9 +793,13 @@ fn show_settings(app: &AppHandle) {
         w = f64::min(w, m.size().width as f64 / s * 0.92);
         h = f64::min(h, m.size().height as f64 / s * 0.9);
     }
+    let page = match section {
+        Some(section) => format!("settings.html#{section}"),
+        None => "settings.html".into(),
+    };
     let app = app.clone();
     std::thread::spawn(move || {
-        let builder = WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("settings.html".into()))
+        let builder = WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App(page.into()))
             .title(title)
             .inner_size(w, h)
             .min_inner_size(f64::min(900.0, w), f64::min(560.0, h))
@@ -836,6 +859,8 @@ struct TrayLabels {
     quit: &'static str,
     /// Followed by the new version.
     update: &'static str,
+    /// The tooltip line while an update waits; `{version}` is replaced.
+    available: &'static str,
 }
 
 fn labels() -> TrayLabels {
@@ -853,6 +878,7 @@ fn labels() -> TrayLabels {
             resume: "Resume",
             quit: "Quit Ghars",
             update: "Install update",
+            available: "Version {version} is available",
         },
         "ur" => TrayLabels {
             ghars: "غرس",
@@ -866,6 +892,7 @@ fn labels() -> TrayLabels {
             resume: "دوبارہ چلائیں",
             quit: "غرس بند کریں",
             update: "اپ ڈیٹ انسٹال کریں",
+            available: "ورژن {version} دستیاب ہے",
         },
         "id" => TrayLabels {
             ghars: "Ghars",
@@ -879,6 +906,7 @@ fn labels() -> TrayLabels {
             resume: "Lanjutkan",
             quit: "Keluar dari Ghars",
             update: "Pasang pembaruan",
+            available: "Versi {version} tersedia",
         },
         "tr" => TrayLabels {
             ghars: "Ghars",
@@ -892,6 +920,7 @@ fn labels() -> TrayLabels {
             resume: "Devam et",
             quit: "Ghars'tan çık",
             update: "Güncellemeyi yükle",
+            available: "{version} sürümü hazır",
         },
         "ms" => TrayLabels {
             ghars: "Ghars",
@@ -905,6 +934,7 @@ fn labels() -> TrayLabels {
             resume: "Sambung semula",
             quit: "Keluar Ghars",
             update: "Pasang kemas kini",
+            available: "Versi {version} kini tersedia",
         },
         "fr" => TrayLabels {
             ghars: "Ghars",
@@ -918,6 +948,7 @@ fn labels() -> TrayLabels {
             resume: "Reprendre",
             quit: "Quitter Ghars",
             update: "Installer la mise à jour",
+            available: "La version {version} est disponible",
         },
         "bn" => TrayLabels {
             ghars: "Ghars",
@@ -931,6 +962,7 @@ fn labels() -> TrayLabels {
             resume: "আবার চালু করুন",
             quit: "Ghars বন্ধ করুন",
             update: "আপডেট ইনস্টল করুন",
+            available: "ভার্সন {version} এসেছে",
         },
         _ => TrayLabels {
             ghars: "غرس",
@@ -944,6 +976,7 @@ fn labels() -> TrayLabels {
             resume: "استئناف",
             quit: "إنهاء غرس",
             update: "تثبيت التحديث",
+            available: "الإصدار {version} متاح",
         },
     }
 }
@@ -1015,7 +1048,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
             "open" => {
                 let _ = app.emit_to("island", "hotkey", "open");
             }
-            "settings" => show_settings(app),
+            "settings" => show_settings(app, None),
             "install-update" => updates::install_in_background(app),
             "pause-30" => set_pause(app, Some(30)),
             "pause-60" => set_pause(app, Some(60)),
@@ -1041,7 +1074,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
             ..
         } = event
         {
-            show_settings(tray.app_handle());
+            show_settings(tray.app_handle(), None);
         }
     });
     let tray = builder.build(app)?;
@@ -1089,7 +1122,7 @@ pub fn run() {
         // reopens the apps of the last session, so Ghars can be started twice there.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if !args.iter().any(|a| a == AUTOSTART_ARG) {
-                show_settings(app)
+                show_settings(app, None)
             }
         }))
         .plugin(
@@ -1105,6 +1138,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -1138,7 +1172,6 @@ pub fn run() {
             list_monitors,
             export_backup,
             import_backup,
-            simulate_agent,
             open_settings,
             autostarted,
             focus_island,

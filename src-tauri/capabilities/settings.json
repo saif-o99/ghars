@@ -1,12 +1,16 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "The settings window: configuration, AI tool hooks, backups, updates and its own title bar",
+  "description": "The settings window: configuration, AI tool hooks, backups, updates, its own title bar and the links on About",
   "windows": ["settings"],
   "permissions": [
     "core:default",
     "store:default",
     "autostart:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://github.com/saif-o99" }, { "url": "https://github.com/saif-o99/ghars/issues" }]
+    },
     "core:window:allow-start-dragging",
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
@@ -17,7 +21,6 @@
     "allow-list-monitors",
     "allow-export-backup",
     "allow-import-backup",
-    "allow-simulate-agent",
     "allow-integrations-status",
     "allow-integration-install",
     "allow-integration-uninstall",

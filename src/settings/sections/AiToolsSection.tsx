@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { fmt } from "../../i18n";
-import { installIntegration, integrations as fetchIntegrations, serverError, serverPort, simulateAgent, uninstallIntegration, type IntegrationStatus } from "../../shared/ipc";
+import { installIntegration, integrations as fetchIntegrations, serverError, serverPort, uninstallIntegration, type IntegrationStatus } from "../../shared/ipc";
 import { Group } from "../components/Group";
 import { Row } from "../components/Row";
 import { Seg } from "../components/Seg";
@@ -84,8 +84,6 @@ export function AiToolsSection({ s, l, update }: SectionProps) {
         <button className="primary" onClick={async () => { for (const t of list.filter((t) => t.detected && !t.installed)) await run(t.id, installIntegration); }}>
           {l.connectAll}
         </button>
-        <button onClick={() => simulateAgent("busy").catch((e) => setErr(withDetail(l.actionFailed, e)))}>{l.testBusy}</button>
-        <button onClick={() => simulateAgent("idle").catch((e) => setErr(withDetail(l.actionFailed, e)))}>{l.testIdle}</button>
       </div>
 
       <Group>

@@ -116,9 +116,6 @@ mockIPC(
         return update;
       case "install_update":
         return installUpdate();
-      case "simulate_agent":
-        void agent(a.kind as "busy" | "idle" | "attention");
-        return null;
       default:
         return null;
     }

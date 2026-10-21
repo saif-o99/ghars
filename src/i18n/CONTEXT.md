@@ -63,8 +63,7 @@ falls back to English.
   `myAdhkar*` (user's own adhkar:
   text, meaning, count, source).
 - **AI tools:** one card per tool: `detected` (installed on this computer),
-  `notDetected`, `connected`, `connect`/`disconnect`. `testBusy`/`testIdle` are buttons
-  to try the behaviour. `autoOpen*` = what the island does when the AI starts.
+  `notDetected`, `connected`, `connect`/`disconnect`. `autoOpen*` = what the island does when the AI starts.
   `codexNote` = an extra step Codex needs. `copilotNote` = shown on the connected Copilot
   card: the same hooks serve the Copilot CLI and VS Code's Copilot agent mode. `skill*` = numbered steps to let the AI tool
   set itself up. `advanced` is a collapsible section that holds `api` (an example for
@@ -79,7 +78,8 @@ falls back to English.
 - **Stats:** today, week/month views, backup export/restore (`imported` uses `{n}` days).
 - **About:** version, updates (`checkUpdates` toggle, `checkNow` button and its results;
   `updateAvailable` uses `{version}` such as 1.2.3, `updateDownloading` uses `{progress}` =
-  "45%" or "3.2 MB"), privacy, sources (Hisn al-Muslim), translation note, licence.
+  "45%" or "3.2 MB"), privacy, sources (Hisn al-Muslim), translation note, licence, `madeBy` (`{name}` = the
+  author, kept in Latin letters) and `reportIssue` (followed by a link to GitHub issues).
 - **Messages and controls:** `*Failed`, `importInvalid`, `coordsInvalid` and `serverError`
   (`{port}` is a number) are error notes. `minimize`/`maximize`/`restore`/`closeWindow`
   are the title-bar buttons, `prevMonth`/`nextMonth` the month arrows in Stats,

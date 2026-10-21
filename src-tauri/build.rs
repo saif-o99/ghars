@@ -14,7 +14,6 @@ fn main() {
             "list_monitors",
             "export_backup",
             "import_backup",
-            "simulate_agent",
             "open_settings",
             "autostarted",
             "focus_island",

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { LANGS, isRtl, locale, type Lang } from "../i18n";
+import { listen } from "@tauri-apps/api/event";
+import { LANGS, fmt, isRtl, locale, type Lang } from "../i18n";
 import { IS_MAC, loadSettings, onSettingsChanged, updateSettings, type Settings } from "../shared/settings";
 import { loadStats } from "../shared/stats";
 import { starPoints } from "../shared/themes";
+import { usePendingUpdate } from "../shared/usePendingUpdate";
 import { TitleBar } from "./TitleBar";
 import { Icon } from "./icons";
 import { Select } from "./Select";
@@ -17,9 +19,15 @@ import { PrayerSection } from "./sections/PrayerSection";
 import { StatsSection } from "./sections/StatsSection";
 import { WelcomeSection } from "./sections/WelcomeSection";
 
+const SECTIONS: Section[] = ["welcome", "appearance", "counting", "ai", "prayer", "behavior", "stats", "about"];
+const asSection = (v: string) => SECTIONS.find((x) => x === v);
+/** The page asked for in the URL (`settings.html#about`), when the window opens on one. */
+const requested = asSection(location.hash.slice(1));
+
 export function SettingsApp() {
   const [s, setS] = useState<Settings | null>(null);
-  const [section, setSection] = useState<Section>("appearance");
+  const [section, setSection] = useState<Section>(requested ?? "appearance");
+  const pendingUpdate = usePendingUpdate();
   const [error, setError] = useState("");
   const mainRef = useRef<HTMLElement>(null);
   // Each page starts at the top.
@@ -40,16 +48,22 @@ export function SettingsApp() {
         const [loaded] = await Promise.all([loadSettings(), loadStats()]);
         if (cancelled) return;
         setS((cur) => cur ?? loaded);
-        if (!loaded.onboarded) setSection("welcome");
+        if (!loaded.onboarded && !requested) setSection("welcome");
       } catch (e) {
         console.error("Couldn't load settings", e);
       }
     })();
     // Follow changes saved elsewhere (the island saves its position after a drag).
     const un = onSettingsChanged((next) => setS(withPending(next)));
+    // A page asked for while the window is already open (the island's update button).
+    const unSection = listen<string>("settings-section", (e) => {
+      const asked = asSection(e.payload);
+      if (asked) setSection(asked);
+    });
     return () => {
       cancelled = true;
       void un.then((u) => u());
+      void unSection.then((u) => u());
     };
   }, []);
 
@@ -109,6 +123,11 @@ export function SettingsApp() {
               <button key={id} className={section === id ? "active" : ""} aria-current={section === id ? "page" : undefined} onClick={() => setSection(id)}>
                 <Icon name={id} />
                 {l.sections[id]}
+                {id === "about" && pendingUpdate && (
+                  <span className="nav-update" title={fmt(l.updateAvailable, { version: pendingUpdate.version })}>
+                    <Icon name="update" />
+                  </span>
+                )}
               </button>
             ))}
           </nav>

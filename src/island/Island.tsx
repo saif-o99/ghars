@@ -7,6 +7,7 @@ import { openSettings, setHitRect, setIslandOpen } from "../shared/ipc";
 import { contextPack, formatCountdown, formatTime, hijriDate, nextPrayer } from "../shared/prayer";
 import { ISLAND_SCALE, type Settings } from "../shared/settings";
 import { countToday } from "../shared/stats";
+import { usePendingUpdate } from "../shared/usePendingUpdate";
 import { getTheme, tileUrl } from "../shared/themes";
 import { Wheel } from "../shared/Wheel";
 import { SHOULDER, notchMask } from "../shared/notch";
@@ -18,6 +19,7 @@ import { ListenButton } from "./components/ListenButton";
 import { PackBar } from "./components/PackBar";
 import { PillLayer } from "./components/PillLayer";
 import { Translation } from "./components/Translation";
+import { UpdateButton } from "./components/UpdateButton";
 import { useBackendEvents } from "./hooks/useBackendEvents";
 import { useCounting } from "./hooks/useCounting";
 import { useDhikrAudio } from "./hooks/useDhikrAudio";
@@ -43,6 +45,7 @@ export function Island() {
   const [notice, setNotice] = useState<PrayerNotice | null>(null);
   const [setMenu, setSetMenu] = useState(false);
   const [anchor, setAnchor] = useState<Anchor>({ edge: "top", x: WIN_W / 2, y: 0 });
+  const pendingUpdate = usePendingUpdate();
 
   const viewRef = useRef(view);
   const settingsRef = useRef(settings);
@@ -275,9 +278,13 @@ export function Island() {
               </button>
             </div>
             <div className="chip-slot end">
-              <button className="icon" title={t.settings} aria-label={t.settings} onClick={() => openSettings().catch(console.error)}>
-                ⚙
-              </button>
+              {pendingUpdate ? (
+                <UpdateButton update={pendingUpdate} l={L.settings} />
+              ) : (
+                <button className="icon" title={t.settings} aria-label={t.settings} onClick={() => openSettings().catch(console.error)}>
+                  ⚙
+                </button>
+              )}
             </div>
           </div>
 
