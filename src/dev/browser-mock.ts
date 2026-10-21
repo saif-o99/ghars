@@ -16,7 +16,7 @@ const params = new URLSearchParams(location.search);
 const settings: Settings = {
   ...DEFAULT_SETTINGS,
   theme: params.get("theme") ?? DEFAULT_SETTINGS.theme,
-  uiLang: (params.get("lang") as Settings["uiLang"]) ?? "ar",
+  uiLang: (params.get("lang") as Settings["uiLang"]) ?? "en",
   islandStyle: params.get("style") === "notch" ? "notch" : "floating",
   islandSize: (params.get("size") as Settings["islandSize"]) ?? "normal",
   islandPos: params.get("align") === "left" ? 0 : params.get("align") === "right" ? 1 : 0.5,

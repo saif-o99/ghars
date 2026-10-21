@@ -61,7 +61,7 @@ impl Default for Config {
         Config {
             hide_in_fullscreen: false,
             hotkey: String::new(),
-            ui_lang: "ar".into(),
+            ui_lang: "en".into(),
             island_edge: "top".into(),
             island_pos: 0.5,
             island_monitor: "primary".into(),
@@ -531,13 +531,22 @@ fn drag_island(app: AppHandle) -> Option<Placement> {
         "top"
     };
     let frac = if edge == "top" { cx / w } else { cy / h }.clamp(0.0, 1.0);
-    let index = app
-        .available_monitors()
-        .ok()?
-        .iter()
-        .position(|m| m.position() == monitor.position())
-        .map(|i| i.to_string())
-        .unwrap_or_else(|| "primary".into());
+    // Dropping it on the primary display keeps "primary", so a single screen never shows "0".
+    let on_primary = app
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .is_some_and(|p| p.position() == monitor.position());
+    let index = if on_primary {
+        "primary".into()
+    } else {
+        app.available_monitors()
+            .ok()?
+            .iter()
+            .position(|m| m.position() == monitor.position())
+            .map(|i| i.to_string())
+            .unwrap_or_else(|| "primary".into())
+    };
     let placement = {
         let mut c = CONFIG.write().unwrap();
         c.island_edge = edge.into();

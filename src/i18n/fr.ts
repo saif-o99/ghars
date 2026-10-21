@@ -31,7 +31,7 @@ export const fr: PartialLocale = {
       welcome: "Quelques réglages pour bien commencer.",
       appearance: "Personnaliser l’apparence et la position de l’îlot.",
       counting: "Choisir une formule d’istighfar, fixer un objectif et ajouter des adhkar.",
-      ai: "L’îlot s’ouvre dès que votre agent IA travaille. Aucune donnée ne quitte votre ordinateur.",
+      ai: "L’îlot s’ouvre dès que votre agent IA travaille.",
       prayer: "Les horaires sont calculés sur votre appareil, sans connexion Internet.",
       behavior: "Démarrage, raccourci clavier, pause et plages de silence.",
       stats: "Vos statistiques restent sur cet appareil.",

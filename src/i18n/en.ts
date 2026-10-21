@@ -32,7 +32,7 @@ export const en = {
       welcome: "A few steps to get started.",
       appearance: "How the island looks and where it sits.",
       counting: "Istighfar wording, daily goal and your own adhkar.",
-      ai: "The island opens when your agent starts working. Nothing leaves your computer.",
+      ai: "The island opens when your agent starts working.",
       prayer: "Times are calculated on your device, offline.",
       behavior: "Startup, shortcut, pausing and quiet hours.",
       stats: "Your counts stay on this device.",

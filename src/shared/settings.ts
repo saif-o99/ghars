@@ -97,10 +97,10 @@ export const DEFAULT_SETTINGS: Settings = {
   islandPos: 0.5,
   islandSlim: false,
   islandMonitor: "primary",
-  uiLang: "ar",
+  uiLang: "en",
   showTranslation: true,
   showSource: true,
-  sound: false,
+  sound: true,
   istighfarPhrase: "short",
   istighfarGoal: 100,
   packMode: "auto",
@@ -205,6 +205,8 @@ export async function loadSettings(): Promise<Settings> {
     saved.islandPos = saved.islandAlign === "left" ? 0 : saved.islandAlign === "right" ? 1 : 0.5;
   }
   delete saved.islandAlign;
+  // Early builds saved the macOS shortcut on every platform; Ctrl+Alt is AltGr off macOS.
+  if (!IS_MAC && saved.hotkey === "CommandOrControl+Alt+G") saved.hotkey = DEFAULT_HOTKEY;
   return normalize(saved);
 }
 

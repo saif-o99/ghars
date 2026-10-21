@@ -81,7 +81,7 @@ export function AppearanceSection({ s, L, l, update }: SectionProps) {
           <Toggle label={l.slim} on={s.islandSlim} onChange={(v) => update({ islandSlim: v })} />
         </Row>
         <Row label={l.screen} help={l.screenHelp}>
-          <Select width={210} value={s.islandMonitor} ariaLabel={l.screen} options={screens} onChange={(v) => update({ islandMonitor: v })} />
+          <Select width={210} value={screens.some((o) => o.value === s.islandMonitor) ? s.islandMonitor : "primary"}ariaLabel={l.screen} options={screens} onChange={(v) => update({ islandMonitor: v })} />
         </Row>
       </Group>
 
