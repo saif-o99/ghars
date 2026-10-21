@@ -21,6 +21,10 @@ Scroll, and every notch is one count.
 The name means *planting*, from the hadith that whoever says *SubhanAllahil-'Azim wa bihamdihi*
 has a palm tree planted for them in Jannah (at-Tirmidhi 3464).
 
+**Watch a one-minute tour:**
+
+https://github.com/user-attachments/assets/f3f2bf8d-a6e7-4266-8b1b-9a50f10b0e4b
+
 ## What you can do
 
 - **Count istighfar** toward a daily goal you set.
