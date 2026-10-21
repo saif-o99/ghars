@@ -9,7 +9,7 @@
   <a href="https://github.com/saif-o99/ghars/releases/latest"><b>⬇ Download for Windows, macOS and Linux</b></a>
 </p>
 
-<p align="center"><img src="docs/images/hero.png" width="800" alt="The Ghars island open at the top of the screen, counting istighfar: 33 of 100"></p>
+<p align="center"><img src="docs/images/hero.png" width="800" alt="The Ghars island open below the top edge of the screen, counting istighfar: 33 of 100"></p>
 
 ## What is Ghars?
 
@@ -32,9 +32,9 @@ has a palm tree planted for them in Jannah (at-Tirmidhi 3464).
   Français, বাংলা.
 - **Look back** at your counts for today, this week and this month.
 
-<p align="center"><img src="docs/images/themes.png" width="800" alt="Six of the themes: Classic Fes, Iznik Tile, Manuscript, Lantern Night, Mashrabiya and Isfahan Lapis"></p>
+<p align="center"><img src="docs/images/themes.png" width="800" alt="Six of the 17 themes"></p>
 <p align="center">
-  <img src="docs/images/arabic.png" width="48%" alt="The island with the Arabic interface">
+  <img src="docs/images/adhkar.png" width="48%" alt="The adhkar: SubhanAllahi wa bihamdihi, 21 of 100, with its source">
   <img src="docs/images/prayer.png" width="48%" alt="Prayer notes: Maghrib in 5 minutes, and it's time for Maghrib">
 </p>
 
@@ -89,9 +89,6 @@ New versions install themselves when you choose to update from the tray menu.
 **Where do the texts come from?** From *Hisn al-Muslim*, with the reference shown for each dhikr.
 The pronunciation audio is computer-generated and is being reviewed by native Arabic speakers.
 
-**Are the translations checked?** Arabic and English are. The other languages are drafts and
-need review by native speakers. Help is welcome.
-
 **I found a mistake.** Please [open an issue](https://github.com/saif-o99/ghars/issues)
 with the item and the reference. Corrections from people of knowledge are very welcome.
 
@@ -99,7 +96,6 @@ with the item and the reference. Corrections from people of knowledge are very w
 
 - Review a translation in your language.
 - Report a mistake in a text or its reference.
-- Developers: see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## License
 

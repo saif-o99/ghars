@@ -5,9 +5,11 @@
 //   ?section=2 (opens that sidebar page)
 // From the console: __ghars.agent("busy" | "idle" | "attention"), __ghars.waiting(), __ghars.hotkey(),
 //   __ghars.updateAvailable("1.2.3")
-// URL options for the island: ?edge=left|right, ?notice=now|soon, ?open=1 (opens it), ?count=33 (today's istighfar)
+// URL options for the island: ?edge=left|right, ?notice=now|soon, ?open=1 (opens it), ?tab=adhkar, ?pack=general,
+//   ?count=33 (today's count for every dhikr)
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import { emit } from "@tauri-apps/api/event";
+import { PACKS } from "../shared/content";
 import { DEFAULT_SETTINGS, type Settings } from "../shared/settings";
 
 const params = new URLSearchParams(location.search);
@@ -19,6 +21,7 @@ const settings: Settings = {
   islandSize: (params.get("size") as Settings["islandSize"]) ?? "normal",
   islandPos: params.get("align") === "left" ? 0 : params.get("align") === "right" ? 1 : 0.5,
   onboarded: params.get("onboarded") !== "0",
+  packMode: (params.get("pack") as Settings["packMode"]) ?? DEFAULT_SETTINGS.packMode,
   prayer: params.get("prayer")
     ? { ...DEFAULT_SETTINGS.prayer, enabled: true, lat: 31.9539, lng: 35.9106, label: "Amman", cityId: "amman" }
     : DEFAULT_SETTINGS.prayer,
@@ -29,9 +32,13 @@ const stores: Record<number, Map<string, unknown>> = {
   2: new Map<string, unknown>(),
 };
 if (params.get("count")) {
+  const n = Number(params.get("count"));
   const d = new Date();
   const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  stores[2].set("days", { [day]: { istighfar: Number(params.get("count")) } });
+  // Every adhkar item gets the same count too, kept below its target so it isn't marked done.
+  const counts: Record<string, number> = { istighfar: n };
+  for (const pack of Object.values(PACKS)) for (const item of pack.items) counts[item.id] = Math.min(n, item.target - 1);
+  stores[2].set("days", { [day]: counts });
 }
 const status = { busy: false, attention: false, sources: [] as string[] };
 
@@ -129,6 +136,8 @@ async function agent(kind: "busy" | "idle" | "attention") {
 if (params.get("notice")) setTimeout(() => void emit("test-prayer", params.get("notice") === "soon" ? "soon" : "now"), 1200);
 // ?open=1 opens the island as the hotkey would, for screenshots.
 if (params.get("open")) setTimeout(() => void emit("hotkey", "toggle"), 800);
+// ?tab=adhkar switches to the adhkar once the island has finished opening.
+if (params.get("tab") === "adhkar") setTimeout(() => document.querySelectorAll<HTMLButtonElement>("button.tab")[1]?.click(), 2500);
 // ?section=3 opens the settings page at that position in the sidebar (0 = the first).
 if (params.get("section"))
   setTimeout(() => document.querySelectorAll<HTMLButtonElement>("nav button")[Number(params.get("section"))]?.click(), 800);
