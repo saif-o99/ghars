@@ -2,6 +2,7 @@
   "name": "ghars",
   "private": true,
   "version": "0.2.4",
+  "author": "Saif Abu eideh",
   "type": "module",
   "scripts": {
     "dev": "vite",
