@@ -2,9 +2,10 @@
 // http://localhost:1437/ or /settings.html). It fakes the Tauri backend in memory.
 // URL options: ?theme=clay  ?lang=en  ?prayer=1  ?onboarded=0  ?servererr=msg  ?style=notch  ?size=large  ?align=left
 //   ?update=1.2.3 (an update is available)  ?updateerr=msg (checking fails)  ?mac=1 (macOS title bar)
+//   ?section=2 (opens that sidebar page)
 // From the console: __ghars.agent("busy" | "idle" | "attention"), __ghars.waiting(), __ghars.hotkey(),
 //   __ghars.updateAvailable("1.2.3")
-// URL options for the island: ?edge=left|right, ?notice=now|soon
+// URL options for the island: ?edge=left|right, ?notice=now|soon, ?open=1 (opens it), ?count=33 (today's istighfar)
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import { emit } from "@tauri-apps/api/event";
 import { DEFAULT_SETTINGS, type Settings } from "../shared/settings";
@@ -27,6 +28,11 @@ const stores: Record<number, Map<string, unknown>> = {
   1: new Map<string, unknown>([["settings", settings]]),
   2: new Map<string, unknown>(),
 };
+if (params.get("count")) {
+  const d = new Date();
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  stores[2].set("days", { [day]: { istighfar: Number(params.get("count")) } });
+}
 const status = { busy: false, attention: false, sources: [] as string[] };
 
 const updateInfo = (version: string) => ({
@@ -121,6 +127,11 @@ async function agent(kind: "busy" | "idle" | "attention") {
 
 // ?notice=now|soon shows a prayer note shortly after the island loads.
 if (params.get("notice")) setTimeout(() => void emit("test-prayer", params.get("notice") === "soon" ? "soon" : "now"), 1200);
+// ?open=1 opens the island as the hotkey would, for screenshots.
+if (params.get("open")) setTimeout(() => void emit("hotkey", "toggle"), 800);
+// ?section=3 opens the settings page at that position in the sidebar (0 = the first).
+if (params.get("section"))
+  setTimeout(() => document.querySelectorAll<HTMLButtonElement>("nav button")[Number(params.get("section"))]?.click(), 800);
 
 Object.assign(window, {
   __ghars: {
