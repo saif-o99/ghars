@@ -1,7 +1,7 @@
 {
   "name": "ghars",
   "private": true,
-  "version": "0.2.6",
+  "version": "0.2.7",
   "author": "Saif Abu eideh",
   "type": "module",
   "scripts": {

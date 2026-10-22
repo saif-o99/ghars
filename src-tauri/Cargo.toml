@@ -1,6 +1,6 @@
 [package]
 name = "ghars"
-version = "0.2.6"
+version = "0.2.7"
 description = "Istighfar and adhkar in the gaps of your workday"
 authors = ["Ghars contributors"]
 edition = "2024"
