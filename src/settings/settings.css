@@ -754,6 +754,7 @@ h2 {
   color: var(--s-accent);
   text-decoration: none;
   unicode-bidi: isolate;
+  white-space: nowrap;
 }
 .about a:hover {
   text-decoration: underline;

@@ -158,6 +158,11 @@ export function AboutSection({ s, l, update }: SectionProps) {
           <p>{l.sources}</p>
           <p>{l.translationsNote}</p>
           <p>{l.openSource}</p>
+        </div>
+      </Group>
+
+      <Group>
+        <div className="about">
           <p>
             {fmt(l.madeBy, { name: "Saif Abu eideh" })} · <Link url={AUTHOR_URL} />
           </p>
