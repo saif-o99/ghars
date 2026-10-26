@@ -32,10 +32,23 @@ import { useWheelInput } from "./hooks/useWheelInput";
 import { WIN_H, WIN_W, arSize, place, sizeOf, type Anchor } from "./layout";
 import type { IslandTimers, Mode, PrayerNotice, View } from "./types";
 
+/** The tab the user last picked, kept so a restart (and the AI opening the island) keeps it. */
+const MODE_KEY = "ghars.mode";
+
+function savedMode(): Mode | null {
+  try {
+    const m = localStorage.getItem(MODE_KEY);
+    return m === "istighfar" || m === "adhkar" ? m : null;
+  } catch {
+    return null;
+  }
+}
+
 export function Island() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [view, setView] = useState<View>("collapsed");
-  const [mode, setMode] = useState<Mode>("istighfar");
+  const [saved] = useState(savedMode);
+  const [mode, setMode] = useState<Mode>(saved ?? "istighfar");
   const [packOverride, setPackOverride] = useState<PackId | null>(null);
   const [idx, setIdx] = useState(0);
   const [, setRev] = useState(0);
@@ -50,6 +63,8 @@ export function Island() {
   const viewRef = useRef(view);
   const settingsRef = useRef(settings);
   const timers = useRef<IslandTimers>({});
+  // Set once the user picks a tab, so the AI opening the island doesn't switch it away.
+  const modePicked = useRef(saved !== null);
   // Event listeners read the latest view and settings through these refs.
   useLayoutEffect(() => {
     viewRef.current = view;
@@ -90,7 +105,7 @@ export function Island() {
   const setDone = pack.items.filter((d) => countToday(d.id) >= d.target).length;
 
   // ---------------------------------------------------------------- setup
-  useBackendEvents({ settingsRef, viewRef, setSettings, setRev, setAnchor, setNow, setNotice, setView, setMode });
+  useBackendEvents({ settingsRef, viewRef, setSettings, setRev, setAnchor, setNow, setNotice, setView, setMode, modePicked });
 
   // The island lays out left-to-right (text runs set their own direction); only the language changes.
   useEffect(() => {
@@ -137,6 +152,16 @@ export function Island() {
 
   // ---------------------------------------------------------------- counting
   const { wheel, miniWheel, hint, flash, live, tick, untick, advance } = useCounting({ settingsRef, view, mode, item, target, pack, setIdx, setRev, timers });
+
+  function pickMode(m: Mode) {
+    modePicked.current = true;
+    setMode(m);
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {
+      // Storage full or blocked: the tab is only remembered until a restart.
+    }
+  }
 
   function choosePack(p: PackId | null) {
     setPackOverride(p);
@@ -270,10 +295,10 @@ export function Island() {
             </div>
             <div className={`tabs ${mode}`} role="tablist">
               <i className="tab-ind" aria-hidden />
-              <button role="tab" aria-selected={mode === "istighfar"} className={`tab ${mode === "istighfar" ? "active" : ""}`} onClick={() => setMode("istighfar")}>
+              <button role="tab" aria-selected={mode === "istighfar"} className={`tab ${mode === "istighfar" ? "active" : ""}`} onClick={() => pickMode("istighfar")}>
                 {t.istighfar}
               </button>
-              <button role="tab" aria-selected={mode === "adhkar"} className={`tab ${mode === "adhkar" ? "active" : ""}`} onClick={() => setMode("adhkar")}>
+              <button role="tab" aria-selected={mode === "adhkar"} className={`tab ${mode === "adhkar" ? "active" : ""}`} onClick={() => pickMode("adhkar")}>
                 {t.adhkar}
               </button>
             </div>

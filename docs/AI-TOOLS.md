@@ -1,8 +1,8 @@
 # Ghars and your AI tools
 
-When your AI coding agent starts working, Ghars opens by itself with adhkar, so the waiting time
-becomes remembrance. It never closes on its own: move the mouse over it and away, press Esc, or
-click ×.
+When your AI coding agent starts working, Ghars opens by itself with adhkar (or the tab you last
+picked), so the waiting time becomes remembrance. It never closes on its own: move the mouse over
+it and away, press Esc, or click ×.
 
 It works with **Claude Code, Cursor, Codex CLI, Gemini CLI and GitHub Copilot** (Copilot CLI and
 agent mode in VS Code).
