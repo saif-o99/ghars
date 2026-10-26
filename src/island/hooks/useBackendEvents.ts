@@ -14,7 +14,7 @@ type Setter<T> = Dispatch<SetStateAction<T>>;
  * Loads the settings and stats, then follows what the backend and the settings window
  * report: settings, stats, the window's anchor, the AI agent, the hotkey.
  */
-export function useBackendEvents({ settingsRef, viewRef, setSettings, setRev, setAnchor, setNow, setNotice, setView, setMode }: {
+export function useBackendEvents({ settingsRef, viewRef, setSettings, setRev, setAnchor, setNow, setNotice, setView, setMode, modePicked }: {
   settingsRef: RefObject<Settings | null>;
   viewRef: RefObject<View>;
   setSettings: Setter<Settings | null>;
@@ -24,11 +24,13 @@ export function useBackendEvents({ settingsRef, viewRef, setSettings, setRev, se
   setNotice: Setter<PrayerNotice | null>;
   setView: Setter<View>;
   setMode: Setter<Mode>;
+  modePicked: RefObject<boolean>;
 }) {
   function autoOpen() {
     const s = settingsRef.current;
     if (!s || s.autoOpen === "off" || viewRef.current !== "collapsed") return;
-    setMode("adhkar");
+    // Adhkar until the user picks a tab; after that, their tab stays.
+    if (!modePicked.current) setMode("adhkar");
     setView(s.autoOpen === "full" ? "expanded" : "compact");
   }
 
